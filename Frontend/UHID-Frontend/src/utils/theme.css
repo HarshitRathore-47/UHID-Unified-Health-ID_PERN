@@ -1,0 +1,56 @@
+/* Default fallback */
+:root {
+  --primary: #6a1b9a;
+  --primary-dark: #4a148c;
+  --ring: #a855f7;
+}
+
+/* PATIENT THEME (Purple) */
+[data-theme="patient"] {
+  --primary: #6a1b9a;
+  --primary-dark: #4a148c;
+  --ring: #a855f7;
+}
+
+/* DOCTOR THEME (Sky Blue) */
+[data-theme="doctor"] {
+  --primary: #0ea5e9;
+  --primary-dark: #0284c7;
+  --ring: #38bdf8;
+}
+
+[data-theme="admin-light"] {
+  /* 🌿 Primary (Fresh Mint Green) */
+  --primary: #10b981; /* Crisp, fresh green */
+  --primary-hover: #059669;
+  --primary-soft: rgba(
+    16,
+    185,
+    129,
+    0.1
+  ); /* Subtle green background for badges/active states */
+  --ring: rgba(16, 185, 129, 0.4);
+
+  /* ☀️ Surface Colors (Light & Airy) */
+  --bg-main: #f8fafc; /* Lightest Gray/Blue (Clean background) */
+  --bg-navbar: #ffffff; /* Stark White (Sidebar contrast) */
+  --bg-card: #ffffff; /* Stark White (Cards) */
+  --bg-hover: #f1f5f9; /* Light gray for interaction */
+
+  /* 📏 Borders & Dividers */
+  --border: #e2e8f0; /* Very subtle separator */
+  --border-focus: #cbd5e1;
+
+  /* ✍️ Typography */
+  --text-main: #0f172a; /* Deep navy for readability */
+  --text-muted: #64748b; /* Soft slate gray */
+  --text-primary: #10b981; /* Primary color text where needed */
+
+  /* 🚦 Status */
+  --success: #10b981;
+  --danger: #ef4444; /* Standard red */
+  --warning: #f59e0b; /* Clear amber */
+
+  /* 💎 Effects */
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}

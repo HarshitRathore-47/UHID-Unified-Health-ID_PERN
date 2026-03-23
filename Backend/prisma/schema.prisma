@@ -1,0 +1,458 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum DoctorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OtpPurpose {
+  EMAIL_VERIFY
+  LOGIN
+  PASSWORD_RESET
+  REGISTER
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  reviewedDoctors Doctor[] @relation("DoctorReviewedBy")
+}
+
+model Patient {
+  id            String   @id @default(uuid())
+  fullName      String
+  dob           DateTime
+  gender        String
+  phone         String?  @unique
+  email         String?  @unique
+  passwordHash  String? // bcrypt hash
+  emailVerified Boolean  @default(false)
+
+  guardianName String? // ADDED (matches your PatientForm.jsx)
+
+  aadhaarHash String? // Never store Aadhaar plaintext
+  address     String?
+  uhid        String? @unique
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents            PatientDocument[]
+  healthProfiles       HealthProfile[]
+  prescription         Prescription[]
+  labReports           LabReport[]
+  diet                 Diet[]
+  vaccinationHistories VaccinationHistory[]
+  visitHistories       VisitHistory[]
+
+  consents   Consent[]
+  Treatments Treatment[]
+}
+
+model PatientDocument {
+  id        String   @id @default(uuid())
+  patientId String
+  type      String // "AADHAAR"
+  fileKey   String
+  fileName  String
+  mimeType  String
+  createdAt DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, type])
+}
+
+model Doctor {
+  id            String   @id @default(uuid())
+  fullName      String
+  dob           DateTime
+  gender        String
+  phone         String?  @unique
+  userName      String?  @unique
+  email         String?  @unique
+  passwordHash  String? // bcrypt hash
+  emailVerified Boolean  @default(false)
+
+  licenseNumber  String
+  specialization String?
+  hospital       String?
+  experience     Int?
+  qualification  String?
+
+  status          DoctorStatus @default(PENDING)
+  rejectionReason String?
+  submittedAt     DateTime     @default(now())
+  reviewedAt      DateTime?
+  reviewedById    String? // Admin.id
+  verifiedAt      DateTime?
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  profilePhotoKey     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  documents            DoctorDocument[]
+  diet                 Diet[]
+  reviewedBy           Admin?               @relation(fields: [reviewedById], references: [id], name: "DoctorReviewedBy")
+  consents             Consent[]
+  prescription         Prescription[]
+  labReports           LabReport[]
+  Treatments           Treatment[]
+  vaccinationHistories VaccinationHistory[]
+  visitHistories       VisitHistory[]
+
+  @@index([status, submittedAt])
+  @@index([email])
+  @@index([licenseNumber])
+}
+
+model DoctorDocument {
+  id         String   @id @default(uuid())
+  doctorId   String
+  type       String //"License"
+  fileName   String
+  fileKey    String // S3 object key / storage reference
+  mimeType   String
+  uploadedAt DateTime @default(now())
+
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, type])
+}
+
+model AuthOtp {
+  id    String  @id @default(uuid())
+  email String?
+
+  // polymorphic-style foreign keys (one of these will be set)
+  patientId String?
+  doctorId  String?
+
+  // optional explicit userType still useful for quick filtering (keep or remove)
+  userType UserRole?
+
+  purpose   OtpPurpose
+  otpHash   String // store hashed OTP only
+  expiresAt DateTime
+  attempts  Int        @default(0)
+  createdAt DateTime   @default(now())
+  verified  Boolean    @default(false)
+
+  @@index([email])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  action    String
+  targetId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+}
+
+model HealthProfile {
+  id         String  @id @default(uuid())
+  patientId  String  @unique
+  profilePic String?
+
+  height    Float?
+  weight    Float?
+  bp        Float?
+  heartRate Int?
+
+  // Changed from Enums to String arrays for maximum flexibility
+  chronicConditions String[]
+  allergies         String[]
+
+  longTermDiseases   String[]
+  bloodGroup         String?
+  spO2               Float?
+  bloodSugarLevels   Float?
+  smokingStatus      String?
+  alcoholConsumption String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+}
+
+model Prescription {
+  id             String  @id @default(uuid())
+  diagnosis      String
+  medicineSystem String?
+
+  doctorId  String
+  patientId String
+
+  createdAt DateTime @default(now())
+
+  medicines PrescriptionMedicine[]
+
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  treatments Treatment[]
+}
+
+model PrescriptionMedicine {
+  id String @id @default(uuid())
+
+  prescriptionId         String
+  prescribedMedicineName String
+  brand                  String?
+  dosage                 String
+  frequency              String
+  instructedTime         String?
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+}
+
+model LabReport {
+  reportId String @id @default(uuid())
+
+  patientId String
+  doctorId  String
+
+  // Upload & digitization
+  uploadDate   DateTime @default(now())
+  uploadFormat String?
+  isDigitized  Boolean  @default(false)
+
+  // Review workflow (ADD THESE)
+  status LabReportStatus @default(PENDING)
+  // PENDING | VERIFIED | REJECTED
+
+  verifiedAt DateTime?
+  verifiedBy String?
+
+  rejectedAt      DateTime?
+  rejectedBy      String?
+  rejectionReason String?
+
+  // Clinical metadata (KEEP ALL)
+  testName       String
+  category       String?
+  labName        String
+  labLocation    String?
+  technicianName String?
+  doctorInCharge String?
+
+  // Dates from actual report (KEEP)
+  collectionDate DateTime?
+  reportDateTime DateTime?
+
+  // Source & notes (KEEP)
+  fileKey      String?
+  remarksNotes String?
+
+  // Relations
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  doctor     Doctor      @relation(fields: [doctorId], references: [id])
+  results    LabResult[]
+  treatments Treatment[]
+}
+
+enum LabReportStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model LabResult {
+  id             String  @id @default(uuid())
+  reportId       String
+  parameterName  String
+  value          String
+  unit           String?
+  referenceRange String?
+  statusFlag     String? // Normal / High / Low
+
+  labReport LabReport @relation(fields: [reportId], references: [reportId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Treatment {
+  id                   String          @id @default(uuid())
+  conditionType        String
+  diseaseName          String
+  hospitalOrClinicName String
+  lastVisitedDate      DateTime
+  nextVisitedDate      DateTime?
+  prescriptionId       String?
+  reportId             String?
+  currentProgress      String
+  progressPercentage   Int?
+  patientId            String
+  doctorId             String
+  status               TreatmentStatus @default(ACTIVE)
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  prescription Prescription? @relation(fields: [prescriptionId], references: [id])
+  report       LabReport?    @relation(fields: [reportId], references: [reportId], onDelete: Cascade)
+  doctor       Doctor        @relation(fields: [doctorId], references: [id])
+}
+
+enum TreatmentStatus {
+  ACTIVE
+  COMPLETED
+  DISCONTINUED
+}
+
+model Diet {
+  dietId    String @id @default(uuid())
+  patientId String
+  doctorId  String
+  dietName  String
+
+  breakfastItems String[]
+  lunchItems     String[]
+  dinnerItems    String[]
+
+  avoidanceRestriction String[]
+
+  startDate          DateTime
+  endDate            DateTime?
+  doctorHospitalName String?
+  createdAt          DateTime   @default(now())
+  status             DietStatus @default(ACTIVE)
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+}
+
+enum DietStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model VaccinationHistory {
+  vaccinationId String    @id @default(uuid())
+  patientId     String
+  vaccineName   String
+  vaccineType   String?
+  doseNumber    Int
+  vaccineDate   DateTime
+  nextDueDate   DateTime?
+  providerName  String?
+  batchNumber   String?
+  hospitalName  String?
+  doctorId      String
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+}
+
+model VisitHistory {
+  visitId             String   @id @default(uuid())
+  doctorId            String
+  patientId           String // PatientID (FK)
+  hospitalName        String // Hospital name
+  hospitalAddress     String? // Hospital address
+  visitDate           DateTime // visit Date
+  purposeReason       String // Purpose reason for visit
+  physicianName       String // physician name
+  physicianSpeciality String? // physician Speciality
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+}
+
+model Consent {
+  id        String @id @default(uuid())
+  patientId String
+  doctorId  String
+
+  // Timestamps for logic layer
+  requestSentAt     DateTime  @default(now())
+  consentAcceptedAt DateTime?
+  consentExpiresAt  DateTime? // Set to requestSentAt + 24h in logic
+
+  // Foundation fields
+  consentStatus Status   @default(PENDING)
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  // Relationships
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor  @relation(fields: [doctorId], references: [id])
+
+  @@index([patientId, doctorId])
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+  REJECTED
+}
+
+// Notification System 
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  role      UserRole
+  type      NotificationType
+  title     String
+  message   String
+  entityId  String? // optional (consentId, reportId etc)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  // Patient Events
+  CONSENT_REQUEST
+  CONSENT_APPROVED
+  CONSENT_REVOKED
+  LAB_UPLOADED
+  LAB_VERIFIED
+  LAB_REJECTED
+  PRESCRIPTION_ADDED
+  DIET_UPDATED
+  TREATMENT_ADDED
+  VACCINATION_ADDED
+
+  // Doctor Events
+  CONSENT_EXPIRED
+  PATIENT_REVOKED_ACCESS
+  LAB_PENDING_REVIEW
+
+  //Admin Events
+  ADMIN_DOCTOR_PENDING
+  ADMIN_DOCTOR_APPROVED
+  ADMIN_DOCTOR_REJECTED
+}
