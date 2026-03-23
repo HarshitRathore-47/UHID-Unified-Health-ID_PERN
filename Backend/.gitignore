@@ -3,3 +3,7 @@ node_modules
 .env
 
 /generated/prisma
+
+Backend/.env
+Backend/src/Config/uhid-auth-firebase-service-account.json
+Backend/src/Config/*service-account*.json
