@@ -11,7 +11,7 @@ const extractData = (response) => {
 const patientService = {
   // First Registeration and Login
 
-  register: async (formData) => {
+  registerPatient: async (formData) => {
     const response = await apiClient.post("/api/patients/register", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -36,12 +36,6 @@ const patientService = {
     const response = await apiClient.post("/api/auth/resend-otp", payload);
     return extractData(response);
   },
-  registerPatient: async (formData) => {
-    const response = await apiClient.post("/api/patients/register", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return extractData(response);
-  },
   logout: async () => {
     const response = await apiClient.post("/api/patients/logout");
     return extractData(response);
@@ -55,7 +49,6 @@ const patientService = {
 
   getHealthProfile: async () => {
     const response = await apiClient.get("/api/patients/health-profile");
-    console.log(response);
     return extractData(response);
   },
 
@@ -181,6 +174,13 @@ const patientService = {
     );
     return extractData(response);
   },
+  markAllRead: async () => {
+    const response = await apiClient.patch(
+      "/api/patients/notifications/readAll",
+    );
+    return extractData(response);
+  },
+  
 };
 
 export default patientService;

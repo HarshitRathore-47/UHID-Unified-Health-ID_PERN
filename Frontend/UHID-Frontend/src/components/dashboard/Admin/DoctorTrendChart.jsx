@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import useTheme from "../../../hooks/useTheme";
 
-function DoctorTrendChart({ data }) {
+function DoctorTrendChart({ data = [] }) {
   useTheme("admin-light");
 
   return (
@@ -25,7 +25,7 @@ function DoctorTrendChart({ data }) {
       </div>
 
       <div className="h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%"  minWidth={280} minHeight={300}>
           <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid 
               strokeDasharray="3 3" 

@@ -11,7 +11,7 @@ import useTheme from "../../../hooks/useTheme";
 // Modern SaaS Palette for Gender (Blue for male, Rose for female)
 const COLORS = ["#3b82f6", "#f43f5e", "#f59e0b", "#10b981"];
 
-function GenderDistributionPie({ data }) {
+function GenderDistributionPie({ data=[] }) {
   useTheme("admin-light");
 
   // Check if at least one gender has a non-zero count
@@ -36,7 +36,7 @@ function GenderDistributionPie({ data }) {
             </p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={280} minHeight={300}>
             <PieChart>
               <Pie
                 data={data}

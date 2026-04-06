@@ -9,15 +9,14 @@ export default function DoctorLogin() {
 
   const navigate = useNavigate();
 
-  const [identifier, setIdentifier] = useState(""); // phone or email
-  const [password, setPassword] = useState(""); // CHANGE: password field added
+  const [identifier, setIdentifier] = useState(""); //
+  const [password, setPassword] = useState(""); //
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(30);
   const [canResend, setCanResend] = useState(false);
 
-  // CHANGE: two-step state
   const [tempLoginId, setTempLoginId] = useState(null);
   const [step, setStep] = useState("CREDENTIALS"); // or "OTP"
 
@@ -27,6 +26,8 @@ export default function DoctorLogin() {
     setLoading(true);
 
     try {
+      setStep("OTP");
+
       const data = await doctorService.login({
         identifier,
         password,
@@ -39,6 +40,8 @@ export default function DoctorLogin() {
       setTempLoginId(data.tempLoginId);
       setStep("OTP");
     } catch (err) {
+      setStep("CREDENTIALS");
+      setTempLoginId(null);
       console.log("LOGIN ERROR:", err);
       const backend = err?.response?.data;
       setError(backend?.message || err.message);
@@ -85,16 +88,19 @@ export default function DoctorLogin() {
   const handleResend = async () => {
     if (!tempLoginId || !canResend) return;
 
+    setOtp(""); // Purana input saaf
+    setCooldown(40); // Timer turant reset
+    setCanResend(false); // Button turant disable
     try {
       await doctorService.resendOtp({
         tempLoginId,
         purpose: "LOGIN",
       });
-
-      setCooldown(30);
-      setCanResend(false);
     } catch (err) {
-      console.warn(err);
+      // Agar server fail hua tabhi wapas enable karo
+      setCanResend(true);
+      setCooldown(0);
+      setError("Failed to resend. Please try again.");
     }
   };
   useEffect(() => {
@@ -212,15 +218,16 @@ export default function DoctorLogin() {
                   type="button"
                   disabled={!canResend}
                   onClick={handleResend}
-                  className="text-(--primary) font-semibold hover:underline disabled:opacity-40"
+                  className="text-(--primary) font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all"
                 >
-                  {canResend ? "Resend" : `Resend in ${cooldown}s`}
+                  {canResend ? (
+                    "Resend OTP"
+                  ) : (
+                    <span className="flex items-center gap-1 justify-center">
+                      Resend in <span className="font-mono">{cooldown}s</span>
+                    </span>
+                  )}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  className="text-(--primary) font-semibold hover:underline"
-                ></button>
               </p>
               <button
                 disabled={loading}

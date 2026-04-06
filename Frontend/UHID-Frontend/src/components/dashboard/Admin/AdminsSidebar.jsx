@@ -20,7 +20,7 @@ function AdminSidebar() {
       await adminService.logout();
       localStorage.removeItem("role");
       setShowLogout(false);
-      navigate("/admin/login", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       console.error("Logout failed", err);
     }

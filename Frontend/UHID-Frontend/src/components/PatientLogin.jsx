@@ -1,29 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lineicons } from "@lineiconshq/react-lineicons";
 import patientService from "../services/patientService";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  PhoneSolid,
-  MailchimpOutlined,
-  Locked1Solid,
-  ArrowLeftSolid,
-} from "@lineiconshq/free-icons";
+import useTheme from "../hooks/useTheme";
 
 export default function LoginPatient() {
+  useTheme("patient");
   const navigate = useNavigate();
 
-  const [identifier, setIdentifier] = useState(""); // phone or email
-  const [password, setPassword] = useState(""); // CHANGE: password field added
+  const [uhid, setUhid] = useState("");
+  const [password, setPassword] = useState(""); //
   const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false); // will be set true when server responds with tempLoginId
-  const [resendCount, setResendCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [cooldown, setCooldown] = useState(30);
+  const [canResend, setCanResend] = useState(false);
 
-  // CHANGE: two-step state
+  // 2. Email hint ke liye naya state
+  const [emailHint, setEmailHint] = useState("");
+
   const [tempLoginId, setTempLoginId] = useState(null);
-  const [step, setStep] = useState("CREDENTIALS"); // or "OTP"
+  const [step, setStep] = useState("CREDENTIALS");
 
   const handleSubmitCredentials = async (e) => {
     e.preventDefault();
@@ -32,18 +29,21 @@ export default function LoginPatient() {
 
     try {
       const data = await patientService.login({
-        identifier,
+        uhid, // 3. Backend ab uhid expect kar raha hai
         password,
       });
 
-      if (!data.tempLoginId) {
+      if (!data?.tempLoginId) {
         throw new Error("Login failed");
       }
 
       setTempLoginId(data.tempLoginId);
+      // 4. Backend se aaya hua email hint set karo
+      setEmailHint(data.emailHint || "your registered email");
       setStep("OTP");
     } catch (err) {
-      setError(err?.response?.data?.message || err.message);
+      const backend = err?.response?.data;
+      setError(backend?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -76,16 +76,39 @@ export default function LoginPatient() {
 
   const handleResend = async () => {
     if (!tempLoginId) return;
+
+    setOtp(""); // Purana input saaf
+    setCooldown(40); // Timer turant reset
+    setCanResend(false);
+
     try {
       await patientService.resendOtp({
         tempLoginId,
         purpose: "LOGIN",
       });
-      setResendCount((c) => c + 1);
     } catch (err) {
+      setCanResend(true);
+      setCooldown(0);
+      setError("Failed to resend. Please try again.");
       console.warn(err);
     }
   };
+  useEffect(() => {
+    if (!canResend) {
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [canResend]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#F8F7FF] via-white to-[#F3F0FF] p-6">
@@ -104,6 +127,7 @@ export default function LoginPatient() {
               key={step}
               id="credentialsForm"
               onSubmit={handleSubmitCredentials}
+              className="space-y-6"
               initial={{ x: 40, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -40, opacity: 0 }}
@@ -111,12 +135,14 @@ export default function LoginPatient() {
             >
               <div>
                 <label className="text-xs font-semibold uppercase text-slate-400 block mb-2">
-                  Phone or Email
+                  UHID ID
                 </label>
                 <input
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Enter phone number or email"
+                  type="String"
+                  value={uhid}
+                  onChange={(e) => setUhid(e.target.value.slice(0, 12))}
+                  placeholder="Enter 12-digit UHID"
+                  maxLength={12}
                   className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/30 outline-none transition-all"
                   required
                 />
@@ -167,10 +193,17 @@ export default function LoginPatient() {
                 Didn't receive?{" "}
                 <button
                   type="button"
+                  disabled={!canResend}
                   onClick={handleResend}
-                  className="text-purple-600 font-semibold hover:underline"
+                  className="text-(--primary) font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all"
                 >
-                  Resend ({resendCount})
+                  {canResend ? (
+                    "Resend OTP"
+                  ) : (
+                    <span className="flex items-center gap-1 justify-center">
+                      Resend in <span className="font-mono">{cooldown}s</span>
+                    </span>
+                  )}
                 </button>
               </p>
             </motion.form>
@@ -188,12 +221,21 @@ export default function LoginPatient() {
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
           {step === "OTP" && (
-            <button
-              onClick={() => setStep("CREDENTIALS")}
-              className="text-sm text-slate-600 hover:underline"
-            >
-              Back
-            </button>
+            <>
+              (
+              <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-[11px] text-blue-700 flex items-center gap-2">
+                📧 Please check <b>{emailHint}</b> for the 6-digit verification
+                code.
+              </div>
+              ), (
+              <button
+                onClick={() => setStep("CREDENTIALS")}
+                className="text-sm text-slate-600 hover:underline"
+              >
+                Back
+              </button>
+              )
+            </>
           )}
 
           <button

@@ -2,9 +2,17 @@
 import express from "express";
 import {
   registerDoctor,
-  loginDoctorStep1,
-  getDoctorStatus,
-  getActiveConsents,
+  loginDoctor,
+  logoutUser,
+} from "../Controllers/Doctor/AuthdoctorController.js";
+import {
+  getDoctorProfile,
+  updateDoctorProfile,
+  updateDoctorProfilePhoto,
+} from "../Controllers/Doctor/profileController.js";
+import { getDoctorStatus } from "../Controllers/Doctor/doctorStatus.js";
+import { getActiveConsents, searchPatientByUHID } from "../Controllers/Doctor/consentHandling.js";
+import {
   getPatientFullRecord,
   createDiet,
   createTreatment,
@@ -14,12 +22,7 @@ import {
   createVisitRecord,
   verifyLabReport,
   rejectLabReport,
-  logoutUser,
-  getDoctorProfile,
-  updateDoctorProfile,
-  updateDoctorProfilePhoto,
-  searchPatientByUHID
-} from "../Controllers/doctorController.js";
+} from "../Controllers/Doctor/recordsHandling.js";
 import {
   deleteTreatment,
   deletePrescription,
@@ -44,7 +47,7 @@ import { createLabReportAI } from "../Controllers/aiControllerForExtraction.js";
 const router = express.Router();
 //Public Routes
 router.post("/register", upload.single("certificate"), registerDoctor);
-router.post("/login", loginDoctorStep1);
+router.post("/login", loginDoctor);
 router.post("/logout", logoutUser);
 
 // Protected Routes

@@ -1,18 +1,18 @@
+import { useState } from "react";
 import usePaginatedResource from "../../../hooks/usePaginatedResource";
 import patientService from "../../../services/patientService";
 import ConsentsUI from "../../UI/ConsentUI.jsx";
 
 function Consents() {
+  const [page, setPage] = useState(1);
+
   const { records, pagination, loading, error, load } = usePaginatedResource(
     patientService.getConsents,
+    "consents",
+    page
   );
 
-  // 🔥 ACCEPTED (active) first
-  const sortedConsents = [...records].sort((a, b) => {
-    if (a.consentStatus === "ACCEPTED") return -1;
-    if (b.consentStatus === "ACCEPTED") return 1;
-    return 0;
-  });
+
 
   const handleAction = async (id, action) => {
     try {
@@ -24,24 +24,24 @@ function Consents() {
         await patientService.revokeConsent(id);
       }
 
-      load(pagination.currentPage);
+      load();
     } catch (err) {
       console.error("Consent action failed:", err);
     }
   };
-  if (loading) return <div>Loading consents...</div>;
+  if (loading && records.length === 0) return <div>Loading consents...</div>;
   if (error) return <div>{error}</div>;
 
   return (
     <>
-      <ConsentsUI consentData={sortedConsents} onAction={handleAction} />
+      <ConsentsUI consentData={records} onAction={handleAction} />
 
       {/* Pagination */}
       {pagination && (
         <div className="flex justify-center items-center gap-6 pt-8">
           <button
             disabled={!pagination.hasPrevPage}
-            onClick={() => load(pagination.currentPage - 1)}
+            onClick={() => setPage(prev => prev - 1)}
             className="px-5 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-200 transition"
           >
             Previous
@@ -53,7 +53,7 @@ function Consents() {
 
           <button
             disabled={!pagination.hasNextPage}
-            onClick={() => load(pagination.currentPage + 1)}
+            onClick={() => setPage(prev => prev + 1)}
             className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-40 hover:bg-purple-700 transition"
           >
             Next

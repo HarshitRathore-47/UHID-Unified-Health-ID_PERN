@@ -1,3 +1,4 @@
+import { useState } from "react";
 import usePaginatedResource from "../../../hooks/usePaginatedResource";
 import patientService from "../../../services/patientService";
 import { formatDate } from "../../../utils/DateHelper";
@@ -5,11 +6,27 @@ import { Activity, Hospital, User, Calendar } from "lucide-react";
 import AnimatedProgressBar from "../../UI/AnimatedProgressBar";
 
 function Treatments() {
+  const [page, setPage] = useState(1);
+
   const { records, pagination, loading, error, load } = usePaginatedResource(
     patientService.getTreatments,
+    "treatements",
+    page,
   );
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
 
-  if (loading) return <div>Loading treatments...</div>;
+  if (loading && records.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+        <p className="text-slate-500 font-bold animate-pulse">
+          Syncing treatment data...
+        </p>
+      </div>
+    );
+  }
   if (error) return <div>{error}</div>;
 
   return (
@@ -31,7 +48,7 @@ function Treatments() {
 
         {/* LIST */}
         <div className="space-y-8">
-          {records.length === 0 && (
+          {records.length === 0 && !loading && (
             <div className="py-28 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white">
               <div className="w-16 h-16 mx-auto rounded-full bg-purple-100 flex items-center justify-center mb-4">
                 <Activity className="text-purple-600" size={28} />
@@ -124,8 +141,8 @@ function Treatments() {
         {pagination && (
           <div className="flex justify-center items-center gap-6 pt-8">
             <button
-              disabled={!pagination.hasPrevPage}
-              onClick={() => load(pagination.currentPage - 1)}
+              disabled={!pagination.hasPrevPage || loading}
+              onClick={() => handlePageChange(page - 1)}
               className="px-5 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-200 transition"
             >
               Previous
@@ -136,8 +153,8 @@ function Treatments() {
             </span>
 
             <button
-              disabled={!pagination.hasNextPage}
-              onClick={() => load(pagination.currentPage + 1)}
+              disabled={!pagination.hasNextPage || loading}
+              onClick={() => handlePageChange(page + 1)}
               className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-40 hover:bg-purple-700 transition"
             >
               Next

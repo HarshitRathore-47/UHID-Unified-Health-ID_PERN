@@ -11,7 +11,7 @@ import useTheme from "../../../hooks/useTheme";
 // Modern SaaS Palette for Pie Segments
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"];
 
-function AgeDistributionPie({ data }) {
+function AgeDistributionPie({ data=[] }) {
   useTheme("admin-light");
 
   return (
@@ -25,8 +25,8 @@ function AgeDistributionPie({ data }) {
         </p>
       </div>
 
-      <div className="flex-1 min-h-[300px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="min[300px] w-full">
+        <ResponsiveContainer width="100%" height="100%"  minWidth={280} minHeight={300}>
           <PieChart>
             <Pie
               data={data}

@@ -30,13 +30,14 @@ export default function PatientRegistration() {
     confirmPassword: "",
     aadhaar: "",
     aadhaarFile: null,
+    address: "",
   });
 
   //   Universal Handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === "email" && value !== formData.email ) {
+    if (name === "email" && value !== formData.email) {
       setOtpVerified(false);
       setOtpSent(false);
       setTempLoginId(null);
@@ -57,6 +58,7 @@ export default function PatientRegistration() {
       setErrors((prev) => ({ ...prev, confirmPassword: null }));
     }
   }, [formData.password, formData.confirmPassword]);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setFormData((prev) => ({ ...prev, aadhaarFile: file }));
@@ -203,6 +205,8 @@ export default function PatientRegistration() {
       Object.entries(rest).forEach(([key, value]) => {
         payload.append(key, value);
       });
+
+      console.log(tempLoginId);
 
       payload.append("aadhaarNumber", formData.aadhaar); //number
       payload.append("aadhaar", formData.aadhaarFile); //file
@@ -373,7 +377,6 @@ export default function PatientRegistration() {
             )}
             {step === 2 && (
               <div className="space-y-8">
-                
                 {/* DEBUG STATE
                 <p style={{ color: "red" }}>otpSent: {String(otpSent)}</p>
                 <p style={{ color: "blue" }}>
@@ -664,6 +667,18 @@ export default function PatientRegistration() {
                         {errors.aadhaarFile}
                       </p>
                     )}
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-slate-400 block mb-2">
+                      Residential Address
+                    </label>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Enter complete address"
+                      className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/30 outline-none transition-all"
+                    />
                   </div>
                 </div>
 

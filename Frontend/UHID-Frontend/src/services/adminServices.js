@@ -8,50 +8,50 @@ const extractData = (response) => {
 };
 
 const adminService = {
-  login(email, password) {
-    return apiClient.post("/admin/login", { email, password });
+  login: async (email, password) => {
+    const res = await apiClient.post("/admin/login", { email, password });
+    return extractData(res);
   },
-  logout(email, password) {
-    return apiClient.post("/admin/logout");
+  logout: async () => {
+    const res = await apiClient.post("/admin/logout");
+    return extractData(res);
   },
-  getDashboard: () => {
-    return apiClient.get("/admin/dashboard");
+  getDashboard: async () => {
+    const res = await apiClient.get("/admin/dashboard");
+    return extractData(res);
   },
-  getAnalytics(filters) {
+  getAnalytics: async (filters) => {
     const params = new URLSearchParams();
-
     if (filters.year !== "all") params.append("year", filters.year);
-
     if (filters.month !== "all") params.append("month", filters.month);
-
     if (filters.gender !== "all") params.append("gender", filters.gender);
-
     if (filters.age !== "all") params.append("age", filters.age);
-
-    return apiClient.get(`/admin/analytics?${params.toString()}`);
+    const res = await apiClient.get(`/admin/analytics?${params.toString()}`);
+    return extractData(res);
   },
-
-  getPendingDoctors: (params) => {
-    return apiClient.get("/admin/doctors", { params });
+  getPendingDoctors: async (params) => {
+    const res = await apiClient.get("/admin/doctors", { params });
+    return extractData(res);
   },
-
-  getDoctorDetails: (id) => {
-    return apiClient.get(`/admin/doctors/${id}`);
+  getDoctorDetails: async (id) => {
+    const res = await apiClient.get(`/admin/doctors/${id}`);
+    return extractData(res);
   },
-
-  approveDoctor: (id) => {
-    return apiClient.put(`/admin/doctors/${id}/approve`);
+  approveDoctor: async (id) => {
+    const res = await apiClient.put(`/admin/doctors/${id}/approve`);
+    return extractData(res);
   },
-
-  rejectDoctor: (id, reason) => {
-    return apiClient.put(`/admin/doctors/${id}/reject`, { reason });
+  rejectDoctor: async (id, reason) => {
+    const res = await apiClient.put(`/admin/doctors/${id}/reject`, { reason });
+    return extractData(res);
   },
-
-  getAuditLogs: (params) => {
-    return apiClient.get("/admin/audit-logs", { params });
+  getAuditLogs: async (params) => {
+    const res = await apiClient.get("/admin/audit-logs", { params });
+    return extractData(res);
   },
-  getDoctorDocument(docId) {
-    return apiClient.get(`/admin/documents/${docId}`);
+  getDoctorDocument: async (docId) => {
+    const res = await apiClient.get(`/admin/documents/${docId}`);
+    return extractData(res);
   },
 
   // adminService.js

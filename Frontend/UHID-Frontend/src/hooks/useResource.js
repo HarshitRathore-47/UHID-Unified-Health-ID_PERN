@@ -1,24 +1,32 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const useResource = (fetchFunction, key, params = null) => {
+// src/hooks/useResource.js
+const useResource = (fetchFunction, key, params = null, options = {}) => {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: [key, params], 
+  const query = useQuery({
+    queryKey: [key, params],
     queryFn: () => fetchFunction(params),
-    
-    // 🔥 INDUSTRY LEVEL POLLING LOGIC
-    staleTime: 0,              // Data ko hamesha stale maano taaki refetch trigger ho sake
-    refetchInterval: 5000,     // Har 5 second mein auto-check karega (Polling)
-    refetchOnWindowFocus: true,// Jaise hi doctor tab par wapas aaye, refresh ho jaye
-    refetchOnReconnect: true,  // Internet wapas aane par sync karega
+    staleTime: 30000,
+    // Agar options.enabled false hai toh interval bhi rok do (Editing ke waqt)
+    refetchInterval: options.enabled === false ? false : 10000,
+    refetchOnWindowFocus: true,
+    ...options,
   });
+
+  // ✅ Naya Function: Sirf Cache badalne ke liye
+  const updateCache = (newData) => {
+    queryClient.setQueryData([key, params], (oldData) => {
+      if (!oldData) return newData;
+      return { ...oldData, ...newData }; // Sirf nayi fields merge hongi
+    });
+  };
 
   const reload = () => {
     queryClient.invalidateQueries({ queryKey: [key] });
   };
 
-  return { data, loading: isLoading, error, reload };
+  return { ...query, loading: query.isLoading, reload, updateCache };
 };
 
 export default useResource;

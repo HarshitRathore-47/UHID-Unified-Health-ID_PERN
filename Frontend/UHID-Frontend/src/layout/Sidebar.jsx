@@ -28,7 +28,6 @@ const menuItems = [
   { id: "vaccinations", icon: Syringe, label: "Vaccinations" },
   { id: "visit-history", icon: CalendarClock, label: "Visit History" },
   { id: "prescriptions", icon: Tablets, label: "Prescriptions" },
-  { id: "privacy", icon: LockKeyhole, label: "Privacy & Security" },
 ];
 
 function MenuItem({ icon: Icon, label, onClick, isActive }) {

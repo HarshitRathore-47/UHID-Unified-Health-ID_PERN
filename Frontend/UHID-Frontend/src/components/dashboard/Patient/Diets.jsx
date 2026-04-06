@@ -1,3 +1,4 @@
+import { useState } from "react";
 import usePaginatedResource from "../../../hooks/usePaginatedResource";
 import patientService from "../../../services/patientService";
 import { formatDate } from "../../../utils/DateHelper";
@@ -5,11 +6,29 @@ import { Apple, Calendar, User } from "lucide-react";
 import MealSection from "../../UI/DietUI";
 
 function Diets() {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { records, pagination, loading, error, load } = usePaginatedResource(
     patientService.getDiets,
+    "diets",
+    currentPage,
   );
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
-  if (loading) return <div>Loading diets...</div>;
+  if (loading && records.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-slate-500 font-medium">
+            Loading your diet plans...
+          </p>
+        </div>
+      </div>
+    );
+  }
   if (error) return <div>{error}</div>;
 
   return (
@@ -31,7 +50,7 @@ function Diets() {
 
         {/* LIST */}
         <div className="space-y-10">
-          {records.length === 0 && (
+          {!loading && records.length === 0 && (
             <div className="py-28 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white">
               <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
                 <Apple className="text-green-600" size={28} />
@@ -128,8 +147,8 @@ function Diets() {
         {pagination && (
           <div className="flex justify-center items-center gap-6 pt-8">
             <button
-              disabled={!pagination.hasPrevPage}
-              onClick={() => load(pagination.currentPage - 1)}
+              disabled={!pagination.hasPrevPage || loading}
+              onClick={() => handlePageChange(currentPage - 1)}
               className="px-5 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-200 transition"
             >
               Previous
@@ -140,8 +159,8 @@ function Diets() {
             </span>
 
             <button
-              disabled={!pagination.hasNextPage}
-              onClick={() => load(pagination.currentPage + 1)}
+              disabled={!pagination.hasNextPage || loading}
+              onClick={() => handlePageChange(currentPage + 1)}
               className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-40 hover:bg-purple-700 transition"
             >
               Next

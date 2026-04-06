@@ -17,9 +17,26 @@ cron.schedule("*/20 * * * *", async () => {
         ],
       },
     });
+    const dietResult = await prisma.diet.updateMany({
+      where: {
+        status: "ACTIVE",
+        endDate: {
+          lt: now, // Agar endDate nikal chuki hai
+          not: null, // Life-long diets ko skip karne ke liye
+        },
+      },
+      data: {
+        status: "COMPLETED", // Status badal do
+      },
+    });
+
+    if (dietResult.count > 0) {
+      console.log(`Diet Cleanup: ${dietResult.count} diets marked as COMPLETED`);
+    }
 
     console.log(`OTP Cleanup: ${result.count} rows deleted`);
   } catch (error) {
     console.error("OTP cleanup failed:", error);
   }
 });
+

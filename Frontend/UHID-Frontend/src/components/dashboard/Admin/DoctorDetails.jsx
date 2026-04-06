@@ -35,7 +35,7 @@ function DoctorDetails() {
   async function fetchDetails() {
     try {
       const res = await adminService.getDoctorDetails(id);
-      setDoctor(res.data.data);
+      setDoctor(res);
     } catch (error) {
       console.error(error);
     } finally {
@@ -151,7 +151,7 @@ function DoctorDetails() {
                   <button
                     onClick={async () => {
                       const res = await adminService.getDoctorDocument(doc.id);
-                      window.open(res.data.url, "_blank");
+                      window.open(res.url, "_blank");
                     }}
                     className="bg-white border border-(--border) text-(--text-main) px-5 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-(--primary) hover:text-white transition-all"
                   >

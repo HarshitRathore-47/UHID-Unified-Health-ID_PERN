@@ -6,6 +6,7 @@ import { Syringe, Calendar, User, Hospital } from "lucide-react";
 function Vaccinations() {
   const { data, loading, error } = useResource(
     patientService.getVaccinationHistory,
+    "vaccinations",
   );
 
   if (loading)
@@ -22,7 +23,7 @@ function Vaccinations() {
       </div>
     );
 
-  const records = data || [];
+  const records = Array.isArray(data) ? data : [];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -51,88 +52,90 @@ function Vaccinations() {
 
         {/* Timeline */}
         <div className="relative space-y-10">
-          {records.map((v, index) => {
-            const isOverdue =
-              v.nextDueDate && new Date(v.nextDueDate) < new Date();
+          {records.length > 0 &&
+            records.map((v, index) => {
+              const isOverdue = v?.nextDueDate
+                ? new Date(v.nextDueDate) < new Date()
+                : false;
 
-            return (
-              <div key={v.vaccinationId} className="relative">
-                {/* Timeline Line */}
-                {index !== records.length - 1 && (
-                  <div className="absolute left-5 top-12 bottom-0 w-px bg-slate-200" />
-                )}
+              return (
+                <div key={v.vaccinationId} className="relative">
+                  {/* Timeline Line */}
+                  {index !== records.length - 1 && (
+                    <div className="absolute left-5 top-12 bottom-0 w-px bg-slate-200" />
+                  )}
 
-                <div className="flex gap-6">
-                  {/* Timeline Dot */}
-                  <div className="relative z-10 mt-2">
-                    <div className="w-4 h-4 rounded-full bg-purple-600 border-4 border-white shadow" />
-                  </div>
-
-                  {/* Card */}
-                  <div className="flex-1 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                      <div>
-                        <h3 className="font-bold text-xl text-slate-800">
-                          {v.vaccineName}
-                        </h3>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-3">
-                          <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase bg-purple-50 text-purple-700 border border-purple-100">
-                            {v.vaccineType}
-                          </span>
-
-                          <span className="text-[10px] font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                            Dose {v.doseNumber}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Due Status */}
-                      {v.nextDueDate && (
-                        <div
-                          className={`text-xs font-semibold px-3 py-1 rounded-full border ${
-                            isOverdue
-                              ? "bg-red-50 text-red-700 border-red-100"
-                              : "bg-emerald-50 text-emerald-700 border-emerald-100"
-                          }`}
-                        >
-                          {isOverdue
-                            ? "Overdue"
-                            : `Next Due: ${formatDate(v.nextDueDate)}`}
-                        </div>
-                      )}
+                  <div className="flex gap-6">
+                    {/* Timeline Dot */}
+                    <div className="relative z-10 mt-2">
+                      <div className="w-4 h-4 rounded-full bg-purple-600 border-4 border-white shadow" />
                     </div>
 
-                    {/* Info Grid */}
-                    <div className="mt-6 grid md:grid-cols-2 gap-6 text-sm font-medium">
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <Calendar size={18} className="text-purple-600" />
-                        <span>
-                          Vaccine Date:{" "}
-                          <span className="text-slate-800 font-semibold">
-                            {formatDate(v.vaccineDate)}
+                    {/* Card */}
+                    <div className="flex-1 bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300">
+                      {/* Header */}
+                      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                        <div>
+                          <h3 className="font-bold text-xl text-slate-800">
+                            {v.vaccineName}
+                          </h3>
+
+                          <div className="mt-3 flex flex-wrap items-center gap-3">
+                            <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase bg-purple-50 text-purple-700 border border-purple-100">
+                              {v.vaccineType}
+                            </span>
+
+                            <span className="text-[10px] font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                              Dose {v.doseNumber}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Due Status */}
+                        {v.nextDueDate && (
+                          <div
+                            className={`text-xs font-semibold px-3 py-1 rounded-full border ${
+                              isOverdue
+                                ? "bg-red-50 text-red-700 border-red-100"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            }`}
+                          >
+                            {isOverdue
+                              ? "Overdue"
+                              : `Next Due: ${formatDate(v.nextDueDate)}`}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info Grid */}
+                      <div className="mt-6 grid md:grid-cols-2 gap-6 text-sm font-medium">
+                        <div className="flex items-center gap-3 text-slate-600">
+                          <Calendar size={18} className="text-purple-600" />
+                          <span>
+                            Vaccine Date:{" "}
+                            <span className="text-slate-800 font-semibold">
+                              {formatDate(v.vaccineDate)}
+                            </span>
                           </span>
-                        </span>
-                      </div>
+                        </div>
 
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <Hospital size={18} className="text-purple-600" />
-                        <span>{v.hospitalName || "-"}</span>
-                      </div>
+                        <div className="flex items-center gap-3 text-slate-600">
+                          <Hospital size={18} className="text-purple-600" />
+                          <span>{v.hospitalName || "-"}</span>
+                        </div>
 
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <User size={18} className="text-purple-600" />
-                        <span>
-                          Dr. {v.doctor?.fullName || v.providerName || "-"}
-                        </span>
+                        <div className="flex items-center gap-3 text-slate-600">
+                          <User size={18} className="text-purple-600" />
+                          <span>
+                            Dr. {v.doctor?.fullName || v.providerName || "-"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       </div>
     </div>

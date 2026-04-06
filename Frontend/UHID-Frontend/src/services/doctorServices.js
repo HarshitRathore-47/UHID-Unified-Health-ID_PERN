@@ -65,7 +65,7 @@ updateProfilePhoto: async (file) => {
 },
 
   // STATUS
-  getDoctorStatus: async (id) => {
+  getDoctorStatus: async () => {
     const response = await apiClient.get(`/api/doctors/status`);
     return extractData(response);
   },
@@ -232,7 +232,7 @@ deleteLabReport: async (id) => {
     );
     return extractData(response);
   },
-  markAllRead: async (id) => {
+  markAllRead: async () => {
     const response = await apiClient.patch(
       `/api/doctors/notifications/readAll`,
     );

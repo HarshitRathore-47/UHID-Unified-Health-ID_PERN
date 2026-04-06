@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./navBar";
 import Sidebar from "./Sidebar";
 import ErrorBoundary from "../components/common/ErrorBoundary";
@@ -19,10 +19,20 @@ import { Routes, Route } from "react-router-dom";
 function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const fetchProfile = async () => {
-      const data = await patientService.getHealthProfile();
-      setProfile(data);
+      try {
+        setLoading(true);
+        const response = await patientService.getHealthProfile();
+        const profileData = response.data || response;
+        setProfile(profileData);
+      } catch (err) {
+        console.error("Home Profile Fetch Error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProfile();
@@ -33,7 +43,7 @@ function Home() {
       <Sidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
 
       <div className="flex-1 flex flex-col">
-        <Navbar setOpen={setIsSidebarOpen} profile={profile}/>
+        <Navbar setOpen={setIsSidebarOpen} profile={profile} />
 
         <main className="flex-1 p-6 bg-slate-50">
           <Routes>

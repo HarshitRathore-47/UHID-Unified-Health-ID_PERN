@@ -36,8 +36,8 @@ function AdminDashboard() {
     try {
       const statsRes = await adminService.getDashboard();
       const analyticsRes = await adminService.getAnalytics(filters);
-      setStats(statsRes.data);
-      setAnalytics(analyticsRes.data);
+      setStats(statsRes);
+      setAnalytics(analyticsRes);
     } catch (err) {
       console.error("Dashboard load failed", err);
     }
@@ -47,7 +47,7 @@ function AdminDashboard() {
     setLoading(true);
     try {
       const res = await adminService.getAnalytics(filters);
-      setAnalytics(res.data);
+      setAnalytics(res);
     } catch (err) {
       console.error("Analytics load failed", err);
     } finally {
@@ -62,6 +62,10 @@ function AdminDashboard() {
       </div>
     );
   }
+const patientTrend = analytics?.patientTrend ?? [];
+const doctorTrend = analytics?.doctorTrend ?? [];
+const ageDistribution = analytics?.ageDistribution ?? [];
+const genderDistribution = analytics?.genderDistribution ?? [];
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 6 }, (_, i) => currentYear - i);
@@ -184,13 +188,13 @@ function AdminDashboard() {
 
       {/* CHARTS GRID - Direct components without wrapper divs to avoid double cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <PatientTrendChart data={analytics.patientTrend} />
-        <DoctorTrendChart data={analytics.doctorTrend} />
+        <PatientTrendChart data={patientTrend} />
+        <DoctorTrendChart data={doctorTrend} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <AgeDistributionPie data={analytics.ageDistribution} />
-        <GenderDistributionPie data={analytics.genderDistribution} />
+        <AgeDistributionPie data={ageDistribution} />
+        <GenderDistributionPie data={genderDistribution} />
       </div>
     </div>
   );

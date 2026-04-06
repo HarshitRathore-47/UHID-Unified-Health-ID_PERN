@@ -1,90 +1,107 @@
 // TODO: Add rate limiting for admin login before production
 
 // src/Controllers/adminController.js
-import { comparePassword, createJwt, hashPassword } from "../../lib/auth.js";
-import { prisma } from "../../lib/prisma.js";
-import { bucket } from "../Config/firebase.js";
-import { successResponse, errorResponse } from "../Utils/apiResponse.js";
-import { createNotification } from "../Utils/Notify.js";
+import { comparePassword, createJwt, hashPassword } from '../../lib/auth.js'
+import { prisma } from '../../lib/prisma.js'
+import { bucket } from '../Config/firebase.js'
+import { successResponse, errorResponse } from '../Utils/apiResponse.js'
+import { createNotification } from '../Utils/Notify.js'
+import {
+  adminLoginSchema,
+  rejectDoctorSchema
+} from '../schemas/admin/adminSchema.js'
+import { paginationSchema } from '../schemas/paginationSchema.js'
 /**
  * adminLogin(req,res)
  * Body: { email, password }
  */
-export async function adminLogin(req, res, next) {
+export async function adminLogin (req, res, next) {
   try {
-    const { email, password } = req.body;
+    const parsed = adminLoginSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return errorResponse(res, parsed.error.issues[0].message, 400)
+    }
+
+    const { email, password } = parsed.data
     if (!email || !password)
-      return res.status(400).json({ message: "Missing credentials" });
+      return errorResponse(res, 'Missing credentials', 400)
 
-    const admin = await prisma.admin.findUnique({ where: { email } });
-    if (!admin) return res.status(401).json({ message: "Invalid credentials" });
+    const admin = await prisma.admin.findUnique({ where: { email } })
+    if (!admin) return errorResponse(res, 'Invalid credentials', 401)
 
-    const isPasswordValid = await comparePassword(password, admin.password);
-    if (!isPasswordValid)
-      return res.status(401).json({ message: "Invalid credentials" });
+    const isPasswordValid = await comparePassword(password, admin.password)
+    if (!isPasswordValid) return errorResponse(res, 'Invalid credentials', 401)
 
     const token = createJwt({
       sub: admin.id,
-      role: "ADMIN",
-      email: admin.email,
-    });
-    res.cookie("token", token, {
+      role: 'ADMIN',
+      email: admin.email
+    })
+    res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
 
-    res.json({ message: "Admin Logined Successfully" });
+    return successResponse(res, null, 'Admin Logined Successfully')
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
-export async function getAdminDashboard(req, res, next) {
+export async function getAdminDashboard (req, res, next) {
   try {
     const [totalPatients, totalDoctors, pendingDoctors] = await Promise.all([
       prisma.patient.count(),
       prisma.doctor.count(),
-      prisma.doctor.count({ where: { status: "PENDING" } }),
-    ]);
+      prisma.doctor.count({ where: { status: 'PENDING' } })
+    ])
 
-    res.json({
-      totalPatients,
-      totalDoctors,
-      pendingDoctors,
-    });
+    return successResponse(
+      res,
+      {
+        totalPatients,
+        totalDoctors,
+        pendingDoctors
+      },
+      'Admin dashboard fetched successfully'
+    )
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
 /**
  * getPendingDoctors(req,res)
  */
-export async function getPendingDoctors(req, res, next) {
+export async function getPendingDoctors (req, res, next) {
   try {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const rawLimit = Number(req.query.limit) || 20;
-    const safetyLimit = Math.max(1, Math.min(rawLimit, 100));
-    const skip = (page - 1) * safetyLimit;
+    const parsedQuery = paginationSchema.safeParse(req.query)
 
-    const search = req.query.search?.trim();
+    if (!parsedQuery.success) {
+      return errorResponse(res, parsedQuery.error.issues[0].message, 400)
+    }
+    const page = Math.max(1, Number(parsedQuery.data.page) || 1)
+    const limit = Number(parsedQuery.data.limit) || 10
+    const skip = (page - 1) * limit
+
+    const search = req.query.search?.trim()
 
     const where = {
-      status: "PENDING",
+      status: 'PENDING',
       ...(search && {
         OR: [
-          { fullName: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          { licenseNumber: { contains: search, mode: "insensitive" } },
-        ],
-      }),
-    };
+          { fullName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { licenseNumber: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    }
 
     const [items, totalCount] = await Promise.all([
       prisma.doctor.findMany({
         where,
         skip,
-        take: safetyLimit,
+        take: limit,
         select: {
           id: true,
           fullName: true,
@@ -97,81 +114,82 @@ export async function getPendingDoctors(req, res, next) {
           experience: true,
           qualification: true,
           status: true,
-          submittedAt: true,
+          submittedAt: true
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' }
       }),
-      prisma.doctor.count({ where }),
-    ]);
+      prisma.doctor.count({ where })
+    ])
 
-    const totalPages = Math.ceil(totalCount / safetyLimit);
+    const totalPages = Math.ceil(totalCount / limit)
 
-    return res.status(200).json({
-      success: true,
-      data: items,
-      pagination: {
-        totalItems: totalCount,
-        totalPages,
-        currentPage: page,
-        limit: safetyLimit,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+    return successResponse(
+      res,
+      {
+        record: items,
+        pagination: {
+          totalItems: totalCount,
+          totalPages,
+          currentPage: page,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
       },
-    });
+      'Pending doctors fetched successfully'
+    )
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
 
 /**
  * approveDoctor(req,res)
  */
-export async function approveDoctor(req, res, next) {
+export async function approveDoctor (req, res, next) {
   try {
-    const { id } = req.params;
-    const adminId = req.user.sub;
+    const { id } = req.params
+    const adminId = req.user.sub
 
     const doctor = await prisma.doctor.findUnique({
-      where: { id },
-    });
+      where: { id }
+    })
 
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+    if (!doctor) return errorResponse(res, 'Doctor not found', 404)
 
-    if (doctor.status !== "PENDING")
-      return res
-        .status(400)
-        .json({ message: "Doctor is already APPROVED or REJECTED" });
+    if (doctor.status !== 'PENDING')
+      return errorResponse(res, 'Doctor is already APPROVED or REJECTED', 400)
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       await tx.doctor.update({
         where: { id },
         data: {
-          status: "APPROVED",
+          status: 'APPROVED',
           verifiedAt: new Date(),
           reviewedAt: new Date(),
-          reviewedById: adminId,
-        },
-      });
+          reviewedById: adminId
+        }
+      })
       await tx.auditLog.create({
         data: {
           actorId: adminId,
-          action: "APPROVE_DOCTOR",
+          action: 'APPROVE_DOCTOR',
           targetId: id,
-          meta: {},
-        },
-      });
-    });
+          meta: {}
+        }
+      })
+    })
     await createNotification({
       userId: adminId,
-      role: "ADMIN",
-      type: "ADMIN_DOCTOR_APPROVED",
-      title: "Doctor Approved",
-      message: `You approved Dr. ${doctor.fullName}`,
-    });
+      role: 'ADMIN',
+      type: 'ADMIN_DOCTOR_APPROVED',
+      title: 'Doctor Approved',
+      message: `You approved Dr. ${doctor.fullName}`
+    })
 
-    res.json({ message: "Doctor approved" });
+    return successResponse(res, null, 'Doctor approved')
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
 
@@ -179,59 +197,60 @@ export async function approveDoctor(req, res, next) {
  * rejectDoctor(req,res)
  * Body: { reason }
  */
-export async function rejectDoctor(req, res, next) {
+export async function rejectDoctor (req, res, next) {
   try {
-    const { id } = req.params;
-    const { reason } = req.body;
-    const adminId = req.user.sub;
-    if (!reason || reason.length < 5) {
-      return res
-        .status(400)
-        .json({ message: "Provide rejection reason (min 5 chars)" });
+    const { id } = req.params
+
+    const adminId = req.user.sub
+
+    // Zod Validation
+    const parsed = rejectDoctorSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return errorResponse(res, parsed.error.issues[0].message, 400)
     }
+    const { reason } = parsed.data
+
     const doctor = await prisma.doctor.findUnique({
-      where: { id },
-    });
+      where: { id }
+    })
 
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+    if (!doctor) return errorResponse(res, 'Doctor not found', 404)
 
-    if (doctor.status !== "PENDING")
-      return res
-        .status(400)
-        .json({ message: "Doctor is already REJECTED or APPROVED" });
+    if (doctor.status !== 'PENDING')
+      return errorResponse(res, 'Doctor is already REJECTED or APPROVED', 400)
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       await tx.doctor.update({
         where: { id },
         data: {
-          status: "REJECTED",
+          status: 'REJECTED',
           rejectionReason: reason,
           reviewedAt: new Date(),
-          reviewedById: adminId,
-        },
-      });
+          reviewedById: adminId
+        }
+      })
       await tx.auditLog.create({
         data: {
           actorId: adminId,
-          action: "REJECT_DOCTOR",
+          action: 'REJECT_DOCTOR',
           targetId: id,
-          meta: { reason },
-        },
-      });
-    });
+          meta: { reason }
+        }
+      })
+    })
 
     // TODO: send email to doctor
-    res.json({ message: "Doctor rejected" });
+    return successResponse(res, null, 'Doctor rejected')
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
 /**
  * getDoctorDetails(req,res)
  */
-export async function getDoctorDetails(req, res, next) {
+export async function getDoctorDetails (req, res, next) {
   try {
-    const { id } = req.params;
+    const { id } = req.params
 
     const doctor = await prisma.doctor.findUnique({
       where: { id },
@@ -258,23 +277,23 @@ export async function getDoctorDetails(req, res, next) {
             type: true,
             fileName: true,
             mimeType: true,
-            uploadedAt: true,
-          },
-        },
-      },
-    });
+            uploadedAt: true
+          }
+        }
+      }
+    })
 
-    if (!doctor) return res.status(404).json({ message: "Doctor not found" });
+    if (!doctor) return errorResponse(res, 'Doctor not found', 404)
 
-    res.json({ data: doctor });
+    return successResponse(res, doctor, 'Doctor details fetched successfully')
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
 
-export async function getDoctorDocument(req, res, next) {
+export async function getDoctorDocument (req, res, next) {
   try {
-    const { docId } = req.params;
+    const { docId } = req.params
 
     const document = await prisma.doctorDocument.findUnique({
       where: { id: docId },
@@ -283,41 +302,50 @@ export async function getDoctorDocument(req, res, next) {
         fileKey: true,
         fileName: true,
         mimeType: true,
-        doctorId: true,
-      },
-    });
+        doctorId: true
+      }
+    })
 
-    if (!document)
-      return res.status(404).json({ message: "Document not found" });
+    if (!document) return errorResponse(res, 'Document not found', 404)
 
     // Get file reference from Firebase bucket
-    const file = bucket.file(document.fileKey);
-    res.setHeader("Content-Type", document.mimeType);
+    const file = bucket.file(document.fileKey)
+    res.setHeader('Content-Type', document.mimeType)
 
     // Generate signed URL (5 minutes)
     const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 15 * 60 * 1000,
-    });
+      action: 'read',
+      expires: Date.now() + 15 * 60 * 1000
+    })
 
-    return res.json({
-      fileName: document.fileName,
-      mimeType: document.mimeType,
-      url: signedUrl,
-    });
+    return successResponse(
+      res,
+      {
+        fileName: document.fileName,
+        mimeType: document.mimeType,
+        url: signedUrl
+      },
+      'Doctor document URL generated'
+    )
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
-export async function getAuditLogs(req, res, next) {
+export async function getAuditLogs (req, res, next) {
   try {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(100, Number(req.query.limit) || 20);
-    const skip = (page - 1) * limit;
+    const parsedQuery = paginationSchema.safeParse(req.query)
 
-    const where = {};
+    if (!parsedQuery.success) {
+      return errorResponse(res, parsedQuery.error.issues[0].message, 400)
+    }
+
+    const page = Math.max(1, Number(parsedQuery.data.page) || 1)
+    const limit = Number(parsedQuery.data.limit) || 10
+    const skip = (page - 1) * limit
+
+    const where = {}
     if (req.query.action) {
-      where.action = req.query.action;
+      where.action = req.query.action
     }
 
     const [logs, totalCount] = await Promise.all([
@@ -325,251 +353,241 @@ export async function getAuditLogs(req, res, next) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           actorId: true,
           action: true,
           targetId: true,
           meta: true,
-          createdAt: true,
-        },
+          createdAt: true
+        }
       }),
       prisma.auditLog.count({
-        where,
-      }),
-    ]);
+        where
+      })
+    ])
 
-    const totalPages = Math.ceil(totalCount / limit);
+    const totalPages = Math.ceil(totalCount / limit)
 
-    res.json({
-      data: logs,
-      pagination: {
-        totalItems: totalCount,
-        totalPages,
-        currentPage: page,
-        limit,
+    return successResponse(
+      res,
+      {
+        record: logs,
+        pagination: {
+          totalItems: totalCount,
+          totalPages,
+          currentPage: page,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
       },
-    });
+      'Audit logs fetched successfully'
+    )
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
-export async function getDashboardAnalytics(req, res, next) {
+export async function getDashboardAnalytics (req, res, next) {
   try {
-    /* =====================
-       Filters
-    ===================== */
+    //  Filters
 
     const year =
-      req.query.year && req.query.year !== "all"
-        ? Number(req.query.year)
-        : null;
+      req.query.year && req.query.year !== 'all' ? Number(req.query.year) : null
 
     const month =
-      req.query.month && req.query.month !== "all"
+      req.query.month && req.query.month !== 'all'
         ? Number(req.query.month)
-        : null;
+        : null
 
     const gender =
-      req.query.gender && req.query.gender !== "all" ? req.query.gender : null;
+      req.query.gender && req.query.gender !== 'all' ? req.query.gender : null
 
     const ageFilter =
-      req.query.age && req.query.age !== "all" ? req.query.age : null;
+      req.query.age && req.query.age !== 'all' ? req.query.age : null
 
-    /* =====================
-       Date Range
-    ===================== */
+    //  Date Range
 
-    let startDate = null;
-    let endDate = null;
+    let startDate = null
+    let endDate = null
 
     if (year && month) {
-      startDate = new Date(year, month - 1, 1);
-      endDate = new Date(year, month, 1);
+      startDate = new Date(year, month - 1, 1)
+      endDate = new Date(year, month, 1)
     } else if (year) {
-      startDate = new Date(year, 0, 1);
-      endDate = new Date(year + 1, 0, 1);
+      startDate = new Date(year, 0, 1)
+      endDate = new Date(year + 1, 0, 1)
     }
 
-    /* =====================
-       Prisma Where Objects
-    ===================== */
+    //  Prisma Where Objects
 
-    const patientWhere = {};
-    const doctorWhere = {};
+    const patientWhere = {}
+    const doctorWhere = {}
 
     if (startDate && endDate) {
       patientWhere.createdAt = {
         gte: startDate,
-        lt: endDate,
-      };
+        lt: endDate
+      }
 
       doctorWhere.createdAt = {
         gte: startDate,
-        lt: endDate,
-      };
+        lt: endDate
+      }
     }
 
     if (gender) {
-      patientWhere.gender = gender;
+      patientWhere.gender = gender
     }
 
-    /* =====================
-       Fetch Data
-    ===================== */
+    //  Fetch Data
 
     const patients = await prisma.patient.findMany({
       where: patientWhere,
       select: {
         createdAt: true,
         dob: true,
-        gender: true,
-      },
-    });
+        gender: true
+      }
+    })
 
     const doctors = await prisma.doctor.findMany({
       where: doctorWhere,
       select: {
-        createdAt: true,
-      },
-    });
+        createdAt: true
+      }
+    })
 
-    /* =====================
-       Age Filter (after fetch)
-    ===================== */
+    //  Age Filter (after fetch)
 
-    let filteredPatients = patients;
+    let filteredPatients = patients
 
     if (ageFilter) {
-      const now = new Date();
+      const now = new Date()
 
-      filteredPatients = patients.filter((p) => {
-        if (!p.dob) return false;
+      filteredPatients = patients.filter(p => {
+        if (!p.dob) return false
 
-        const age = now.getFullYear() - new Date(p.dob).getFullYear();
+        const age = now.getFullYear() - new Date(p.dob).getFullYear()
 
-        if (ageFilter === "0-18") return age <= 18;
-        if (ageFilter === "18-35") return age > 18 && age <= 35;
-        if (ageFilter === "35-60") return age > 35 && age <= 60;
-        if (ageFilter === "60+") return age > 60;
+        if (ageFilter === '0-18') return age <= 18
+        if (ageFilter === '18-35') return age > 18 && age <= 35
+        if (ageFilter === '35-60') return age > 35 && age <= 60
+        if (ageFilter === '60+') return age > 60
 
-        return true;
-      });
+        return true
+      })
     }
 
-    /* =====================
-       Patient Monthly Trend
-    ===================== */
+    //  Patient Monthly Trend
 
-    const patientMonthly = {};
+    const patientMonthly = {}
 
-    filteredPatients.forEach((p) => {
-      const monthName = new Date(p.createdAt).toLocaleString("default", {
-        month: "short",
-      });
+    filteredPatients.forEach(p => {
+      const monthName = new Date(p.createdAt).toLocaleString('default', {
+        month: 'short'
+      })
 
-      patientMonthly[monthName] = (patientMonthly[monthName] || 0) + 1;
-    });
+      patientMonthly[monthName] = (patientMonthly[monthName] || 0) + 1
+    })
 
     const patientTrend = Object.entries(patientMonthly).map(
-      ([month, count]) => ({ month, count }),
-    );
+      ([month, count]) => ({ month, count })
+    )
 
-    /* =====================
-       Doctor Monthly Trend
-    ===================== */
+    //  Doctor Monthly Trend
 
-    const doctorMonthly = {};
+    const doctorMonthly = {}
 
-    doctors.forEach((d) => {
-      const monthName = new Date(d.createdAt).toLocaleString("default", {
-        month: "short",
-      });
+    doctors.forEach(d => {
+      const monthName = new Date(d.createdAt).toLocaleString('default', {
+        month: 'short'
+      })
 
-      doctorMonthly[monthName] = (doctorMonthly[monthName] || 0) + 1;
-    });
+      doctorMonthly[monthName] = (doctorMonthly[monthName] || 0) + 1
+    })
 
     const doctorTrend = Object.entries(doctorMonthly).map(([month, count]) => ({
       month,
-      count,
-    }));
+      count
+    }))
 
-    /* =====================
-       Age Distribution
-    ===================== */
+    //  Age Distribution
 
     const ageGroups = {
-      "0-18": 0,
-      "18-35": 0,
-      "35-60": 0,
-      "60+": 0,
-    };
+      '0-18': 0,
+      '18-35': 0,
+      '35-60': 0,
+      '60+': 0
+    }
 
-    const now = new Date();
+    const now = new Date()
 
-    filteredPatients.forEach((p) => {
-      if (!p.dob) return;
+    filteredPatients.forEach(p => {
+      if (!p.dob) return
 
-      const age = now.getFullYear() - new Date(p.dob).getFullYear();
+      const age = now.getFullYear() - new Date(p.dob).getFullYear()
 
-      if (age <= 18) ageGroups["0-18"]++;
-      else if (age <= 35) ageGroups["18-35"]++;
-      else if (age <= 60) ageGroups["35-60"]++;
-      else ageGroups["60+"]++;
-    });
+      if (age <= 18) ageGroups['0-18']++
+      else if (age <= 35) ageGroups['18-35']++
+      else if (age <= 60) ageGroups['35-60']++
+      else ageGroups['60+']++
+    })
 
     const ageDistribution = Object.entries(ageGroups).map(([group, count]) => ({
       group,
-      count,
-    }));
+      count
+    }))
 
-    /* =====================
-       Gender Distribution
-    ===================== */
+    // Gender Distribution
 
     const genderMap = new Map([
-      ["MALE", 0],
-      ["FEMALE", 0]
-    ]);
+      ['MALE', 0],
+      ['FEMALE', 0]
+    ])
 
-    filteredPatients.forEach((p) => {
+    filteredPatients.forEach(p => {
       if (p.gender) {
         // 2. Data ko uppercase mein convert karke match karo
-        const normalizedGender = p.gender.toUpperCase();
+        const normalizedGender = p.gender.toUpperCase()
 
-        const currentCount = genderMap.get(normalizedGender) || 0;
-        genderMap.set(normalizedGender, currentCount + 1);
+        const currentCount = genderMap.get(normalizedGender) || 0
+        genderMap.set(normalizedGender, currentCount + 1)
       }
-    });
+    })
 
     const genderDistribution = Array.from(genderMap, ([gender, count]) => ({
       gender,
       count
-    }));
+    }))
 
-    /* =====================
-       Final Response
-    ===================== */
+    //  Final Response
 
-    res.json({
+    const analyticsData = {
       totalPatients: filteredPatients.length,
       totalDoctors: doctors.length,
       patientTrend,
       doctorTrend,
       ageDistribution,
-      genderDistribution,
-    });
+      genderDistribution
+    }
+
+    return successResponse(
+      res,
+      analyticsData,
+      'Dashboard analytics fetched successfully'
+    )
   } catch (err) {
-    next(err);
+    next(err)
   }
 }
-export function adminlogout(req, res) {
-  res.clearCookie("token", {
+export function adminlogout (req, res) {
+  res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  })
 
-  return successResponse(res, {}, "Logged out successfully");
+  return successResponse(res, {}, 'Logged out successfully')
 }

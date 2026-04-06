@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import patientService from "../services/patientService";
 import { formatDate } from "../utils/DateHelper";
 import MainLogo from "../assets/Mainlogo.jpg";
-import useResource from "../hooks/useResource"; // Assuming you have this custom hook as per the doctor code
+import useResource from "../hooks/useResource"; 
 
 function Navbar({ setOpen, profile }) {
   const navigate = useNavigate();
@@ -29,7 +29,6 @@ function Navbar({ setOpen, profile }) {
     "/patient/vaccinations": "Vaccinations",
     "/patient/visit-history": "Visit History",
     "/patient/prescriptions": "Prescriptions",
-    "/patient/privacy": "Privacy & Security",
   };
 
   // ✅ Reactive Data fetching using Tanstack Query logic

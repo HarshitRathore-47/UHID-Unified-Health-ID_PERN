@@ -1,6 +1,6 @@
 // src/Routes/auth.js
 import express from "express";
-import { sendOtp,verifyLoginOtp, resendOtp } from "../Controllers/authController.js";
+import { sendOtp,verifyLoginOtp, resendOtp } from "../Controllers/UniversalAuthController.js";
 const router = express.Router();
 
 router.post("/send-otp",sendOtp);

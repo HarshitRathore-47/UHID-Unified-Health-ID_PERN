@@ -37,14 +37,17 @@ const toArray = (str) =>
     : [];
 
 function HealthProfile() {
-  const { data, loading, error, reload } = useResource(
-    patientService.getHealthProfile,
-  );
-
   const [isEditing, setIsEditing] = useState(false);
   const [showTick, setShowTick] = useState(false);
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const { data, loading, error, reload, updateCache } = useResource(
+    patientService.getHealthProfile,
+    "healthProfile",
+    null,
+    { enabled: !isEditing }, // 🔥 Jab isEditing true hoga, polling OFF ho jayegi
+  );
 
   const fileInputRef = useRef(null);
 
@@ -78,9 +81,9 @@ function HealthProfile() {
       const healthPayload = {
         height: profile.height !== "" ? Number(profile.height) : null,
         weight: profile.weight !== "" ? Number(profile.weight) : null,
-        bp: profile.bp !== "" ? Number(profile.bp) : null,
+        bp: profile.bp || null,
         heartRate: profile.heartRate !== "" ? Number(profile.heartRate) : null,
-
+        guardianName: profile.guardianName || null,
         bloodGroup: profile.bloodGroup,
         chronicConditions: toArray(profile.chronicConditions),
         allergies: toArray(profile.allergies),
@@ -88,12 +91,15 @@ function HealthProfile() {
       };
       // Update local state with server-confirmed data
       setSaving(true);
-      await patientService.updateHealthProfile(healthPayload);
-      setSaving(false);
-      reload(); // re-fetch fresh data
+      const response = await patientService.updateHealthProfile(healthPayload);
+      updateCache(response);
+     
       setIsEditing(false);
     } catch (err) {
       console.error(err);
+    }
+    finally{
+       setSaving(false);
     }
   };
 
@@ -307,7 +313,7 @@ function HealthProfile() {
                 value={profile.bp}
                 isEdit={isEditing}
                 onChange={handleInputChange}
-                type="number"
+                type="text"
                 dark
               />
               <EditableField

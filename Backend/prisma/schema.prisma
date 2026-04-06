@@ -40,8 +40,8 @@ model Patient {
   fullName      String
   dob           DateTime
   gender        String
-  phone         String?  @unique
-  email         String?  @unique
+  phone         String? 
+  email         String?  
   passwordHash  String? // bcrypt hash
   emailVerified Boolean  @default(false)
 
@@ -184,7 +184,7 @@ model HealthProfile {
 
   height    Float?
   weight    Float?
-  bp        Float?
+  bp        String?
   heartRate Int?
 
   // Changed from Enums to String arrays for maximum flexibility

@@ -31,8 +31,8 @@ function AuditLogs() {
         limit: 10,
         action: actionFilter,
       });
-      setLogs(res.data.data);
-      setPagination(res.data.pagination);
+      setLogs(res.record || []);
+      setPagination(res.pagination || {});
     } catch (error) {
       console.error("Failed to load audit logs", error);
     } finally {

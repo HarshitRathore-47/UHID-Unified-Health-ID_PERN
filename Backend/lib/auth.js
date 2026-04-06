@@ -107,11 +107,11 @@ export function isAdmin(req, res, next) {
   const token =
     req.cookies?.token || req.headers.authorization?.split(" ")[1] || null;
 
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   const payload = verifyJwt(token);
   if (!payload || payload.role !== "ADMIN")
-    return res.status(403).json({ message: "Forbidden" });
+   return res.status(403).json({ message: "Forbidden" });
 
   req.user = payload;
   next();

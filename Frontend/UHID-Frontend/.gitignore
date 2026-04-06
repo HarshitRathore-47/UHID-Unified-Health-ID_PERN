@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Env — real values commit mat karo (Vite)
+.env
+.env.*

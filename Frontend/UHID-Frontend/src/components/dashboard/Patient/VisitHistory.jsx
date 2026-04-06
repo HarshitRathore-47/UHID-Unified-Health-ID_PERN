@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import usePaginatedResource from "../../../hooks/usePaginatedResource";
 import patientService from "../../../services/patientService";
@@ -5,11 +6,18 @@ import { formatDate } from "../../../utils/DateHelper";
 import { CalendarClock, MapPin, User } from "lucide-react";
 
 function VisitHistory() {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { records, pagination, loading, error, load } = usePaginatedResource(
     patientService.getVisitHistory,
+    "visit-history",
+    currentPage,
   );
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
-  if (loading)
+  if (loading && records.length === 0)
     return (
       <div className="flex items-center justify-center h-40 text-slate-500 font-medium">
         Loading visit history...
@@ -52,7 +60,7 @@ function VisitHistory() {
 
         {records.map((visit, index) => (
           <motion.div
-            key={index}
+            key={visit.visitId || index}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -107,8 +115,8 @@ function VisitHistory() {
       {pagination && (
         <div className="flex justify-center items-center gap-6 pt-8">
           <button
-            disabled={!pagination.hasPrevPage}
-            onClick={() => load(pagination.currentPage - 1)}
+            disabled={!pagination.hasPrevPage || loading}
+            onClick={() => handlePageChange(pagination.currentPage - 1)}
             className="px-5 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-200 transition"
           >
             Previous
@@ -119,8 +127,8 @@ function VisitHistory() {
           </span>
 
           <button
-            disabled={!pagination.hasNextPage}
-            onClick={() => load(pagination.currentPage + 1)}
+            disabled={!pagination.hasNextPage || loading}
+            onClick={() => handlePageChange(pagination.currentPage + 1)}
             className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-40 hover:bg-purple-700 transition"
           >
             Next

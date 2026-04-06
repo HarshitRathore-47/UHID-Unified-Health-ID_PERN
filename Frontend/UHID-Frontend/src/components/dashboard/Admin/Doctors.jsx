@@ -17,7 +17,7 @@ function Doctors() {
   async function fetchDoctors() {
     try {
       const res = await adminService.getPendingDoctors();
-      setDoctors(res.data.data);
+      setDoctors(res.record || []);
     } catch (error) {
       console.error("Failed to load doctors", error);
     } finally {

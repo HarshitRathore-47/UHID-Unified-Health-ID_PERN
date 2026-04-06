@@ -2,21 +2,20 @@
 import express from "express";
 import {
   registerPatient,
-  loginPatientStep1,
-  getPatientDashboardData,
-  getLabreports,
-  getLabReportById,
-  getHealthProfile,
+  loginPatient,
+  logoutUser,
+} from "../Controllers/Patient/authPatientController.js";
+import { getLabReportById, getLabreports } from "../Controllers/Patient/labReportsController.js";
+import { getPatientDashboardData } from "../Controllers/Patient/dashboardController.js";
+import { getHealthProfile, uploadProfilePhoto, updateHealthProfile } from "../Controllers/Patient/healthProfileController.js";
+import {
   getPatientTreatments,
   getPatientDiets,
   getPatientPrescriptions,
   getPatientConsents,
   getVisitHistory,
   getVaccinationHistory,
-  updateHealthProfile,
-  uploadProfilePhoto,
-  logoutUser,
-} from "../Controllers/patientController.js";
+} from "../Controllers/Patient/recordsController.js";
 import {
   getNotifications,
   clearReadNotifications,
@@ -32,7 +31,9 @@ const router = express.Router();
 
 //Public Routes
 router.post("/register", upload.single("aadhaar"), registerPatient);
-router.post("/login", loginPatientStep1);
+router.post("/login", loginPatient);
+//logout
+router.post("/logout", logoutUser);
 
 // Protected Routes
 router.use(requireAuth);
@@ -49,8 +50,7 @@ router.post(
   uploadProfilePhoto,
 );
 
-//logout
-router.post("/logout", logoutUser);
+
 
 // Lab Reports
 router.get("/lab-reports", getLabreports);

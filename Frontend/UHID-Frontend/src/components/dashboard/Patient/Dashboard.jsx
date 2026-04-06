@@ -2,19 +2,21 @@ import { useState } from "react";
 import useResource from "../../../hooks/useResource";
 import patientService from "../../../services/patientService";
 import { calculateAge } from "../../../utils/DateHelper";
-import { Copy ,CheckCircle2} from "lucide-react";
-import { AnimatePresence,motion } from "framer-motion";
+import { Copy, CheckCircle2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 function Dashboard() {
   const [showTick, setShowTick] = useState(false);
-  const { data, loading, error } = useResource(patientService.getDashboardData);
+  const { data, loading, error } = useResource(patientService.getDashboardData,"patientDashboard");
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-64 text-slate-500 text-lg font-medium">
-        Loading dashboard...
-      </div>
-    );
+  if (loading && !data) {
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4a148c]"></div>
+      <p className="mt-4 text-slate-500 font-medium italic">Preparing your health identity...</p>
+    </div>
+  );
+}
 
   if (error)
     return (
@@ -23,15 +25,16 @@ function Dashboard() {
       </div>
     );
   if (!data) return null;
+
   const {
-    profile,
-    consents,
-    labReports,
-    activeTreatments,
-    diet,
-    vaccinations,
-    visitHistory,
-  } = data;
+    profile = {},
+    consents = [],
+    labReports = [],
+    activeTreatments = [],
+    diet = [],
+    vaccinations = [],
+    visitHistory = [],
+  } = data || {};
 
   const status = profile?.status || "Active";
 
@@ -41,6 +44,7 @@ function Dashboard() {
   }
 
   const handleCopy = () => {
+    if (!profile?.uhid) return;   //Gaurd Clause
     navigator.clipboard.writeText(profile.uhid);
     setShowTick(true);
     // Hide the tick after 2 seconds
@@ -60,7 +64,7 @@ function Dashboard() {
 
             <div className="flex flex-wrap items-center gap-4">
               <h1 className="text-4xl font-mono font-black tracking-tight">
-                {formatUHID(profile.uhid)}
+                {formatUHID(profile?.uhid)}
               </h1>
 
               <button
@@ -86,7 +90,7 @@ function Dashboard() {
               </AnimatePresence>
             </div>
 
-            <h2 className="text-3xl font-bold">{profile.fullName}</h2>
+            <h2 className="text-3xl font-bold">{profile?.fullName}</h2>
           </div>
 
           {/* Right Section */}
@@ -112,18 +116,18 @@ function Dashboard() {
               <div className="mt-4 text-sm space-y-1">
                 <p>
                   <span className="text-purple-200">Gender:</span>{" "}
-                  {profile.gender}
+                  {profile?.gender}
                 </p>
                 <p>
                   <span className="text-purple-200">Age:</span>{" "}
-                  {calculateAge(profile.dob)} yrs
+                  {calculateAge(profile?.dob)} yrs
                 </p>
               </div>
             </div>
 
             <div className="w-20 h-20 rounded-2xl bg-white p-1 shadow-lg">
               <img
-                src={`https://ui-avatars.com/api/?name=${profile.fullName}&background=f3e5f5&color=4a148c&bold=true`}
+                src={`https://ui-avatars.com/api/?name=${profile?.fullName}&background=f3e5f5&color=4a148c&bold=true`}
                 alt="User"
                 className="w-full h-full object-cover rounded-xl"
               />
@@ -145,8 +149,8 @@ function Dashboard() {
 
         <SummaryCard title="Active Treatments">
           {activeTreatments.length === 0 && <Empty />}
-          {activeTreatments.map((t, i) => (
-            <Item key={i}>
+          {activeTreatments.map((t) => (
+            <Item key={t.id}>
               {t.diseaseName} – {t.currentProgress}
             </Item>
           ))}
@@ -154,8 +158,8 @@ function Dashboard() {
 
         <SummaryCard title="Recent Consents">
           {consents.length === 0 && <Empty />}
-          {consents.map((c, i) => (
-            <Item key={i}>
+          {consents.map((c) => (
+            <Item key={c.id}>
               Dr. {c.doctor?.fullName} – {c.consentStatus}
             </Item>
           ))}
@@ -163,8 +167,8 @@ function Dashboard() {
 
         <SummaryCard title="Vaccinations">
           {vaccinations.length === 0 && <Empty />}
-          {vaccinations.map((v, i) => (
-            <Item key={i}>
+          {vaccinations.map((v) => (
+            <Item key={v.vaccinationId}>
               {v.vaccineName} – Dose {v.doseNumber}
             </Item>
           ))}
