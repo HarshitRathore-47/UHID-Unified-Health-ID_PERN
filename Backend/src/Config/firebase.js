@@ -1,32 +1,16 @@
-// import admin from "firebase-admin";
-// import serviceAccount from "./uhid-auth-firebase-service-account.json" assert { type: "json" };
-
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-//   storageBucket: "uhid-auth.appspot.com",
-// });
-
-// export const bucket = admin.storage().bucket();
-
-
-
-
 import admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
-// Required for __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+if (!raw) {
+  throw new Error("Missing FIREBASE_SERVICE_ACCOUNT env var");
+}
 
-// 🔥 Read JSON manually (NO assert needed)
-const serviceAccount = JSON.parse(
-  fs.readFileSync(
-    path.join(__dirname, "./uhid-auth-firebase-service-account.json"),
-    "utf8"
-  )
-);
+const serviceAccount = JSON.parse(raw);
+
+// Important for keys copied with escaped newlines
+if (serviceAccount.private_key) {
+  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
