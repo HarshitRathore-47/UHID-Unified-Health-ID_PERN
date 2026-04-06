@@ -17,9 +17,10 @@ function getCorsOrigins () {
     ? process.env.CORS_ORIGIN_PROD
     : process.env.CORS_ORIGIN_DEV
   const fallback = 'http://localhost:5173'
+
   const list = (raw || fallback)
     .split(',')
-    .map(s => s.trim())
+    .map(s => s.trim().replace(/\/$/, '')) // 👈 Ye last wale '/' ko hata dega automatically
     .filter(Boolean)
   return list
 }
@@ -33,8 +34,12 @@ app.use(
   cors({
     origin (origin, callback) {
       if (!origin) return callback(null, true)
-      if (allowedOrigins.includes(origin)) return callback(null, true)
-      return callback(new Error('Not allowed by CORS'))
+
+      // 💡 Origin ko check karne se pehle uska bhi aakhiri slash hata do
+      const cleanedOrigin = origin.replace(/\/$/, '');
+      if (allowedOrigins.includes(cleanedOrigin)) return callback(null, true)
+      console.log('Blocked Origin:', origin);
+      return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
   })
