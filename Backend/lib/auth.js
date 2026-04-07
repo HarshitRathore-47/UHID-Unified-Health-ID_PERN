@@ -36,10 +36,10 @@ const transporter = nodemailer.createTransport({
 transporter
   .verify()
   .then(() => {
-    console.log("✅ Gmail SMTP transporter ready");
+    console.log(`✅ SMTP transporter ready (${process.env.SMTP_HOST})`);
   })
   .catch((err) => {
-    console.warn("⚠️ Gmail SMTP verify failed:", err.message);
+    console.warn("⚠️ SMTP verify failed:", err.message);
   });
 
 // --- Utility Helpers ---
