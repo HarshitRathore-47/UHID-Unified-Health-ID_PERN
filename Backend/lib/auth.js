@@ -12,7 +12,7 @@ export const OTP_TTL_MS = 1000 * 60 * 10;
 const BCRYPT_ROUNDS = 12;
 
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
@@ -21,11 +21,14 @@ const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
-  secure: true, // Gmail 465 → secure
+  secure: false, // Gmail 465 → secure and 587 false
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS, // Gmail App Password (NOT your gmail login password)
   },
+  tls: {
+    rejectUnauthorized: false // Connection timeout se bachne ke liye extra safety
+  }
 });
 
 // Verify connection (debug only)
