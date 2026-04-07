@@ -20,15 +20,23 @@ const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
 // --- Create Gmail transporter ---
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
-  port: SMTP_PORT,
+  port: 587,
   secure: false, // Gmail 465 → secure and 587 false
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS, // Gmail App Password (NOT your gmail login password)
   },
+  // --- Render ke liye zaroori timeouts ---
+  connectionTimeout: 20000, // 20 seconds tak wait karega
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
+  dnsTimeout: 10000,
+
   tls: {
     rejectUnauthorized: false // Connection timeout se bachne ke liye extra safety
-  }
+  },
+  debug: true, // Render logs mein detailed info dikhayega
+  logger: true // Detailed logs enable karega
 });
 
 // Verify connection (debug only)
