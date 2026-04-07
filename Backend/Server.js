@@ -11,17 +11,10 @@ import consentRoutes from './src/Routes/consent.js'
 import dotenv from 'dotenv'
 import './src/scheduleJobs/otpCleanup.js'
 
-app.get("/test-network", (req, res) => {
-    const s = new net.Socket();
-    s.setTimeout(5000);
-    s.on('connect', () => { s.destroy(); res.send("Port is OPEN!"); })
-     .on('timeout', () => { s.destroy(); res.send("Port is BLOCKED (Timeout)"); })
-     .on('error', (e) => { s.destroy(); res.send("Error: " + e.message); })
-     .connect(587, 'smtp-relay.brevo.com');
-});
+
 
 dotenv.config()
-function getCorsOrigins () {
+function getCorsOrigins() {
   const isProd = process.env.NODE_ENV === 'production'
   const raw = isProd
     ? process.env.CORS_ORIGIN_PROD
@@ -37,12 +30,21 @@ function getCorsOrigins () {
 const allowedOrigins = getCorsOrigins()
 
 const app = express()
+app.get("/test-network", (req, res) => {
+  const s = new net.Socket();
+  s.setTimeout(5000);
+  s.on('connect', () => { s.destroy(); res.send("Port is OPEN!"); })
+    .on('timeout', () => { s.destroy(); res.send("Port is BLOCKED (Timeout)"); })
+    .on('error', (e) => { s.destroy(); res.send("Error: " + e.message); })
+    .connect(587, 'smtp-relay.brevo.com');
+});
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 app.use(
   cors({
-    origin (origin, callback) {
+    origin(origin, callback) {
       if (!origin) return callback(null, true)
 
       // 💡 Origin ko check karne se pehle uska bhi aakhiri slash hata do
