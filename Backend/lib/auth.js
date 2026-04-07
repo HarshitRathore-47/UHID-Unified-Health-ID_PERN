@@ -11,7 +11,7 @@ export const JWT_EXPIRES_SECONDS = 60 * 60 * 24 * 7; // 7 days
 export const OTP_TTL_MS = 1000 * 60 * 10;
 const BCRYPT_ROUNDS = 12;
 
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
@@ -19,24 +19,17 @@ const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
 
 // --- Create Gmail transporter ---
 const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: 587,
-  secure: false, // Gmail 465 → secure and 587 false
+  // Ab ye settings seedhe aapke Env variables se aayengi
+  host: process.env.SMTP_HOST, 
+  port: Number(process.env.SMTP_PORT),
+  secure: false, // 587 port dono (Gmail/Brevo) ke liye false pe chalta hai
   auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS, // Gmail App Password (NOT your gmail login password)
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
-  // --- Render ke liye zaroori timeouts ---
-  connectionTimeout: 20000, // 20 seconds tak wait karega
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-  dnsTimeout: 10000,
-
   tls: {
-    rejectUnauthorized: false // Connection timeout se bachne ke liye extra safety
-  },
-  debug: true, // Render logs mein detailed info dikhayega
-  logger: true // Detailed logs enable karega
+    rejectUnauthorized: false // Dono jagah connection stable rakhega
+  }
 });
 
 // Verify connection (debug only)
