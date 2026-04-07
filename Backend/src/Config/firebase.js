@@ -1,13 +1,16 @@
 import admin from "firebase-admin";
+import fs from "fs"; // File system import karein
 
-const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-if (!raw) {
-  throw new Error("Missing FIREBASE_SERVICE_ACCOUNT env var");
+let serviceAccount;
+
+// Check karein agar local file exist karti hai (Local testing ke liye)
+if (fs.existsSync("./uhid-auth-firebase-service-account.json")) {
+  serviceAccount = JSON.parse(fs.readFileSync("./uhid-auth-firebase-service-account.json", "utf8"));
+} else {
+  // Live server (Render/Vercel) ke liye env use karein
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 }
 
-const serviceAccount = JSON.parse(raw);
-
-// Important for keys copied with escaped newlines
 if (serviceAccount.private_key) {
   serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
 }
