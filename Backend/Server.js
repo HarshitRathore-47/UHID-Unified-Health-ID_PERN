@@ -1,6 +1,7 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import net from 'net';
 
 import authRoutes from './src/Routes/auth.js'
 import patientRoutes from './src/Routes/patients.js'
@@ -9,6 +10,15 @@ import adminRoutes from './src/Routes/admin.js'
 import consentRoutes from './src/Routes/consent.js'
 import dotenv from 'dotenv'
 import './src/scheduleJobs/otpCleanup.js'
+
+app.get("/test-network", (req, res) => {
+    const s = new net.Socket();
+    s.setTimeout(5000);
+    s.on('connect', () => { s.destroy(); res.send("Port is OPEN!"); })
+     .on('timeout', () => { s.destroy(); res.send("Port is BLOCKED (Timeout)"); })
+     .on('error', (e) => { s.destroy(); res.send("Error: " + e.message); })
+     .connect(587, 'smtp-relay.brevo.com');
+});
 
 dotenv.config()
 function getCorsOrigins () {
