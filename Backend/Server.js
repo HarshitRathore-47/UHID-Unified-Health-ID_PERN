@@ -18,11 +18,11 @@ function getCorsOrigins() {
   const isProd = process.env.NODE_ENV === 'production'
   console.log('--- CORS DEBUG START ---');
   console.log('NODE_ENV:', process.env.NODE_ENV);
-  
+
   const raw = isProd
     ? process.env.CORS_ORIGIN_PROD
     : process.env.CORS_ORIGIN_DEV
-  
+
   console.log('Raw Env (CORS_ORIGIN_PROD/DEV):', `"${raw}"`); // Using quotes to see hidden spaces
 
   const fallback = 'http://localhost:5173'
@@ -48,9 +48,6 @@ app.get("/test-network", (req, res) => {
     .connect(587, 'smtp-relay.brevo.com');
 });
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
 app.use(
   cors({
     origin(origin, callback) {
@@ -65,6 +62,11 @@ app.use(
     credentials: true
   })
 )
+
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
+
 
 // mount routes
 app.use('/api/auth', authRoutes)
