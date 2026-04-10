@@ -5,7 +5,8 @@ import {
   hashPassword,
   sendOtpEmail,
   OTP_TTL_MS,
-  createJwt
+  createJwt,
+  sendWelcomeEmail
 } from '../../../lib/auth.js'
 import { prisma } from '../../../lib/prisma.js'
 import { generateUniqueUHID } from '../../../lib/Uhid.js'

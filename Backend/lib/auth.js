@@ -55,17 +55,17 @@ transporter
 // --- Utility Helpers ---
 
 // Hash OTP value
-export function hashPlainOtp (otp) {
+export function hashPlainOtp(otp) {
   return crypto.createHash('sha256').update(String(otp)).digest('hex')
 }
 
 // JWT generation
-export function createJwt (payload) {
+export function createJwt(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_SECONDS })
 }
 
 // JWT verification
-export function verifyJwt (token) {
+export function verifyJwt(token) {
   try {
     return jwt.verify(token, JWT_SECRET)
   } catch {
@@ -74,17 +74,17 @@ export function verifyJwt (token) {
 }
 
 // Password hashing
-export async function hashPassword (plain) {
+export async function hashPassword(plain) {
   return bcrypt.hash(plain, BCRYPT_ROUNDS)
 }
 
 // Compare password
-export async function comparePassword (plain, hash) {
+export async function comparePassword(plain, hash) {
   return bcrypt.compare(plain, hash)
 }
 
 // --- Send OTP Email via Gmail SMTP ---
-export async function sendOtpEmail (toEmail, otp, purpose = 'LOGIN') {
+export async function sendOtpEmail(toEmail, otp, purpose = 'LOGIN') {
   if (!toEmail) return { ok: false, error: 'Missing recipient email' }
 
   const subject =
@@ -118,32 +118,98 @@ export async function sendWelcomeEmail(toEmail, patientName, uhid, details = {})
   if (!toEmail) return { ok: false, error: 'Missing recipient email' };
 
   const subject = 'Welcome to UHID - Your Healthcare Identity';
-  
+
   // HTML Template for a professional look
   const html = `
-    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-      <h2 style="color: #4a148c; text-align: center;">Welcome to UHID System</h2>
-      <p>Hello <strong>${patientName}</strong>,</p>
-      <p>Thank you for registering with us. Your account has been successfully created.</p>
-      
-      <div style="background-color: #f3e5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 14px; color: #6a1b9a;"><strong>YOUR UHID ID:</strong></p>
-        <h1 style="margin: 5px 0; color: #4a148c; letter-spacing: 2px;">${uhid}</h1>
-      </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+    
+    @media only screen and (max-width: 600px) {
+      .inner-body { width: 100% !important; border-radius: 0 !important; }
+      .content-padding { padding: 30px 20px !important; }
+      .uhid-text { font-size: 28px !important; letter-spacing: 2px !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f2f7; font-family: 'Plus Jakarta Sans', Helvetica, Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f2f7; padding: 40px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="inner-body" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; box-shadow: 0 20px 40px rgba(74, 20, 140, 0.08); overflow: hidden;">
+          
+          <tr>
+            <td style="background: linear-gradient(90deg, #4a148c 0%, #7b1fa2 100%); padding: 40px 40px 30px 40px; text-align: center;">
+               <div style="background: rgba(255,255,255,0.1); display: inline-block; padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);">
+                 <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">UHID <span style="color: #e1bee7;">SECURE</span></h2>
+               </div>
+            </td>
+          </tr>
 
-      <p><strong>Quick Details:</strong></p>
-      <ul>
-        <li><strong>Name:</strong> ${patientName}</li>
-        <li><strong>UHID:</strong> ${uhid}</li>
-        <li><strong>Gender:</strong> ${details.gender || 'N/A'}</li>
-      </ul>
+          <tr>
+            <td class="content-padding" style="padding: 40px 50px;">
+              <h3 style="color: #1a1a1a; font-size: 22px; margin-top: 0;">Hi ${patientName},</h3>
+              <p style="color: #555; font-size: 16px; line-height: 1.6;">Your digital health journey starts here. Your secure Healthcare Identity (UHID) is now active and linked to your medical profile.</p>
 
-      <p>Please use this UHID to login to your patient portal. Keep this ID safe for future hospital visits.</p>
-      
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-      <p style="font-size: 12px; color: #888; text-align: center;">This is an automated message from UHID Secure Healthcare Identity.</p>
-    </div>
-  `;
+              <div style="background-color: #fbf9ff; border: 2px solid #f0eaff; border-radius: 20px; padding: 35px 20px; margin: 35px 0; text-align: center; position: relative;">
+                <span style="background-color: #4a148c; color: #ffffff; padding: 4px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);">Your Unique Health ID</span>
+                
+                <h1 class="uhid-text" style="margin: 15px 0; color: #4a148c; font-size: 38px; letter-spacing: 6px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">${uhid}</h1>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                   <p style="margin: 0; font-size: 13px; color: #6a1b9a; font-weight: 600; line-height: 1.5;">
+                    ⚠️ Important: Please <strong>type this ID manually</strong> when logging in.<br>
+                    Avoid copy-pasting to ensure no accidental spaces are included and to help you memorize your unique ID.
+                   </p>
+                </div>
+              </div>
+
+              <table width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 16px; background-color: #f8f9fa; border-radius: 12px;">
+                    <table width="100%">
+                      <tr>
+                        <td style="font-size: 14px; color: #777; padding-bottom: 8px;">Patient Name</td>
+                        <td align="right" style="font-size: 14px; color: #1a1a1a; font-weight: 700; padding-bottom: 8px;">${patientName}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 14px; color: #777;">Gender</td>
+                        <td align="right" style="font-size: 14px; color: #1a1a1a; font-weight: 700;">${details.gender || 'N/A'}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="text-align: center;">
+                <p style="font-size: 14px; color: #888; line-height: 1.5;">
+                  Keep this ID safe. It is required for all future consultations, lab reports, and portal access.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 0 50px 40px 50px;">
+              <div style="border-top: 1px solid #eee; padding-top: 30px; text-align: center;">
+                <p style="font-size: 12px; color: #aaa; margin: 0;">
+                  This is an automated security notification from <br>
+                  <strong style="color: #888;">UHID Secure Healthcare Systems &copy; 2026</strong>
+                </p>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
 
   const mailOptions = {
     from: FROM_EMAIL,
@@ -164,7 +230,7 @@ export async function sendWelcomeEmail(toEmail, patientName, uhid, details = {})
 // --- Middleware Helpers ---
 
 // ADMIN check
-export function isAdmin (req, res, next) {
+export function isAdmin(req, res, next) {
   const token =
     req.cookies?.token || req.headers.authorization?.split(' ')[1] || null
 
@@ -179,7 +245,7 @@ export function isAdmin (req, res, next) {
 }
 
 // Authentication check
-export function requireAuth (req, res, next) {
+export function requireAuth(req, res, next) {
   const token =
     req.cookies?.token || req.headers.authorization?.split(' ')[1] || null
 
@@ -192,7 +258,7 @@ export function requireAuth (req, res, next) {
   console.log(req.user.sub)
   next()
 }
-export function requireRole (expectedRole) {
+export function requireRole(expectedRole) {
   return (req, res, next) => {
     if (!req.user || req.user.role !== expectedRole) {
       return res.status(403).json({
