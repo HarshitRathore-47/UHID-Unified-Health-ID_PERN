@@ -128,7 +128,7 @@ export default function DoctorSidebar({ open, setOpen }) {
         initial={{ x: -280 }}
         animate={{ x: open ? 0 : -280 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="fixed top-0 left-0 h-screen w-72 
+        className="fixed top-0 left-0 h-dvh w-72 
         bg-linear-to-b from-(--primary) to-(--primary-dark)
         border-r border-white/10 shadow-2xl
         z-40 flex flex-col"
