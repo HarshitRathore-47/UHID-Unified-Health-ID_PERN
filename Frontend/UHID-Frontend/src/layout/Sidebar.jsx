@@ -78,7 +78,9 @@ export default function Sidebar({ open, setOpen }) {
 
   const handleNavClick = (viewId) => {
     navigate(`/patient/${viewId === "dashboard" ? "" : viewId}`);
-    setOpen(false);
+    if (window.innerWidth < 1024) {
+      setOpen(false);
+    }
   };
   const handleLogout = async () => {
     try {

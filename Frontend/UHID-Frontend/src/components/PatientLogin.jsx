@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import patientService from "../services/patientService";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,6 +7,7 @@ import useTheme from "../hooks/useTheme";
 export default function LoginPatient() {
   useTheme("patient");
   const navigate = useNavigate();
+  const otpInputRef = useRef(null);
 
   const [uhid, setUhid] = useState("");
   const [password, setPassword] = useState(""); //
@@ -29,7 +30,7 @@ export default function LoginPatient() {
 
     try {
       const data = await patientService.login({
-        uhid, // 3. Backend ab uhid expect kar raha hai
+        uhid,
         password,
       });
 
@@ -38,10 +39,11 @@ export default function LoginPatient() {
       }
 
       setTempLoginId(data.tempLoginId);
-      // 4. Backend se aaya hua email hint set karo
       setEmailHint(data.emailHint || "your registered email");
-      setStep("OTP");
+      setStep("OTP"); // ✅ Success hone par hi step badlo
     } catch (err) {
+      setStep("CREDENTIALS");
+      setTempLoginId(null);
       const backend = err?.response?.data;
       setError(backend?.message || err.message);
     } finally {
@@ -78,7 +80,7 @@ export default function LoginPatient() {
     if (!tempLoginId) return;
 
     setOtp(""); // Purana input saaf
-    setCooldown(40); // Timer turant reset
+    setCooldown(30); // Timer turant reset
     setCanResend(false);
 
     try {
@@ -109,6 +111,11 @@ export default function LoginPatient() {
       return () => clearInterval(timer);
     }
   }, [canResend]);
+  useEffect(() => {
+    if (step === "OTP" && otpInputRef.current) {
+      otpInputRef.current.focus(); // ✅ Naya: OTP step par input ko focus karein
+    }
+  }, [step]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#F8F7FF] via-white to-[#F3F0FF] p-6">
@@ -124,7 +131,7 @@ export default function LoginPatient() {
           {/* Form Content */}
           {step === "CREDENTIALS" ? (
             <motion.form
-              key={step}
+              key="credentials"
               id="credentialsForm"
               onSubmit={handleSubmitCredentials}
               className="space-y-6"
@@ -138,7 +145,7 @@ export default function LoginPatient() {
                   UHID ID
                 </label>
                 <input
-                  type="String"
+                  type="text"
                   value={uhid}
                   onChange={(e) => setUhid(e.target.value.slice(0, 12))}
                   placeholder="Enter 12-digit UHID"
@@ -161,6 +168,14 @@ export default function LoginPatient() {
                   required
                 />
               </div>
+
+              <button
+                disabled={loading}
+                type="submit"
+                className="w-full py-3 rounded-xl bg-linear-to-r from-[#6a1b9a] to-[#4a148c] text-white font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+              >
+                {loading ? "Processing..." : "Continue"}
+              </button>
             </motion.form>
           ) : (
             <motion.form
@@ -173,11 +188,20 @@ export default function LoginPatient() {
               exit={{ x: -40, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
+              <button
+                type="button"
+                onClick={() => setStep("CREDENTIALS")}
+                className="text-sm font-medium text-purple-600 hover:underline flex items-center gap-1"
+              >
+                ← Back
+              </button>
+
               <div>
                 <label className="text-xs font-semibold uppercase text-slate-400 block mb-2">
                   Enter OTP
                 </label>
                 <input
+                  ref={otpInputRef}
                   value={otp}
                   onChange={(e) =>
                     setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
@@ -189,13 +213,18 @@ export default function LoginPatient() {
                 />
               </div>
 
+              <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-[11px] text-blue-700 text-center leading-relaxed">
+                📧 Please check <b className="text-blue-900">{emailHint}</b> for
+                the 6-digit verification code.
+              </div>
+
               <p className="text-xs text-slate-500 text-center">
                 Didn't receive?{" "}
                 <button
                   type="button"
                   disabled={!canResend}
                   onClick={handleResend}
-                  className="text-(--primary) font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all"
+                  className="text-purple-600 font-bold hover:underline disabled:opacity-50 disabled:no-underline transition-all"
                 >
                   {canResend ? (
                     "Resend OTP"
@@ -206,6 +235,14 @@ export default function LoginPatient() {
                   )}
                 </button>
               </p>
+
+              <button
+                disabled={loading}
+                type="submit"
+                className="w-full py-3 rounded-xl bg-linear-to-r from-[#6a1b9a] to-[#4a148c] text-white font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+              >
+                {loading ? "Verifying..." : "Verify & Login"}
+              </button>
             </motion.form>
           )}
         </AnimatePresence>
@@ -218,34 +255,21 @@ export default function LoginPatient() {
 
         {/* Navigation Section */}
         <div className="mt-8 space-y-4">
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          <div className="min-h-[32px] flex items-center justify-center mb-2">
+            <AnimatePresence>
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="text-xs font-medium text-red-500 bg-red-50 px-4 py-2 rounded-lg border border-red-100 text-center w-full"
+                >
+                  {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
 
-          {step === "OTP" && (
-            <>
-              (
-              <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-[11px] text-blue-700 flex items-center gap-2">
-                📧 Please check <b>{emailHint}</b> for the 6-digit verification
-                code.
-              </div>
-              ), (
-              <button
-                onClick={() => setStep("CREDENTIALS")}
-                className="text-sm text-slate-600 hover:underline"
-              >
-                Back
-              </button>
-              )
-            </>
-          )}
-
-          <button
-            disabled={loading}
-            type="submit"
-            form={step === "CREDENTIALS" ? "credentialsForm" : "otpForm"}
-            className="w-full py-3 rounded-xl bg-linear-to-r from-[#6a1b9a] to-[#4a148c] text-white font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
-          >
-            {step === "CREDENTIALS" ? "Continue" : "Verify & Login"}
-          </button>
           {/* Back to Registration */}
           <div className="text-center pt-4 border-t border-slate-100">
             <p className="text-sm text-slate-500">

@@ -148,51 +148,53 @@ function LabReportsUI({
 
                   {/* Results Table */}
                   <div className="p-8 max-h-[65vh] overflow-y-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 sticky top-0">
-                        <tr className="text-left text-slate-600">
-                          <th className="p-4">Parameter</th>
-                          <th className="p-4">Value</th>
-                          <th className="p-4">Range</th>
-                          <th className="p-4">Status</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {selectedReport.results?.map((res) => (
-                          <tr
-                            key={res.id}
-                            className="border-t hover:bg-slate-50 transition"
-                          >
-                            <td className="p-4 font-medium text-slate-800">
-                              {res.parameterName}
-                            </td>
-
-                            <td className="p-4">
-                              {res.value} {res.unit}
-                            </td>
-
-                            <td className="p-4 text-slate-500">
-                              {res.referenceRange}
-                            </td>
-
-                            <td>
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  res.statusFlag === "High"
-                                    ? "bg-red-50 text-red-700"
-                                    : res.statusFlag === "Low"
-                                      ? "bg-amber-50 text-amber-700"
-                                      : "bg-emerald-50 text-emerald-700"
-                                }`}
-                              >
-                                {res.statusFlag}
-                              </span>
-                            </td>
+                    <div className="overflow-x-auto w-full border border-slate-100 rounded-xl">
+                      <table className="w-full text-sm min-w-[600px] ">
+                        <thead className="bg-slate-50 sticky top-0">
+                          <tr className="text-left text-slate-600">
+                            <th className="p-4">Parameter</th>
+                            <th className="p-4">Value</th>
+                            <th className="p-4">Range</th>
+                            <th className="p-4">Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+
+                        <tbody>
+                          {selectedReport.results?.map((res) => (
+                            <tr
+                              key={res.id}
+                              className="border-t hover:bg-slate-50 transition"
+                            >
+                              <td className="p-4 font-medium text-slate-800">
+                                {res.parameterName}
+                              </td>
+
+                              <td className="p-4">
+                                {res.value} {res.unit}
+                              </td>
+
+                              <td className="p-4 text-slate-500">
+                                {res.referenceRange}
+                              </td>
+
+                              <td>
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                    res.statusFlag === "High"
+                                      ? "bg-red-50 text-red-700"
+                                      : res.statusFlag === "Low"
+                                        ? "bg-amber-50 text-amber-700"
+                                        : "bg-emerald-50 text-emerald-700"
+                                  }`}
+                                >
+                                  {res.statusFlag}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </motion.div>
               </div>

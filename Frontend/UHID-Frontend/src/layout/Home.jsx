@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import Navbar from "./navBar";
 import Sidebar from "./Sidebar";
 import ErrorBoundary from "../components/common/ErrorBoundary";
@@ -13,48 +13,36 @@ import Prescriptions from "../components/dashboard/Patient/Prescriptions";
 import VisitHistory from "../components/dashboard/Patient/VisitHistory";
 import Consents from "../components/dashboard/Patient/Consents";
 import patientService from "../services/patientService";
+import useResource from "../hooks/useResource";
 
 import { Routes, Route } from "react-router-dom";
 
 function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await patientService.getHealthProfile();
-        const profileData = response.data || response;
-        setProfile(profileData);
-      } catch (err) {
-        console.error("Home Profile Fetch Error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+const { data: profileData, loading, error } = useResource(
+    patientService.getHealthProfile,
+    "patientHealthProfile" 
+  );
 
   return (
     <div className="flex min-h-screen">
       <Sidebar open={isSidebarOpen} setOpen={setIsSidebarOpen} />
 
       <div className="flex-1 flex flex-col">
-        <Navbar setOpen={setIsSidebarOpen} profile={profile} />
+        <Navbar setOpen={setIsSidebarOpen} profile={profileData} />
 
         <main className="flex-1 p-6 bg-slate-50">
           <Routes>
             <Route
-              index
-              element={
-                <ErrorBoundary>
-                  <Dashboard />
-                </ErrorBoundary>
-              }
-            />
+            index
+            element={
+              <ErrorBoundary>
+                {/* ✅ Naya: Dashboard ko pura profileData pass karein */}
+                <Dashboard profileData={profileData} loading={loading} error={error} />
+              </ErrorBoundary>
+            }
+          />
             <Route
               path="health-profile"
               element={

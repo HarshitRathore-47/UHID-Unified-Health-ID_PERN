@@ -87,7 +87,9 @@ export default function DoctorSidebar({ open, setOpen }) {
 
   const handleNavClick = (path) => {
     navigate(path);
-    setOpen(false); // Mobile view mein click karte hi band ho jaye
+    if (window.innerWidth < 1024) {
+      setOpen(false);
+    } // Mobile view mein click karte hi band ho jaye
   };
 
   const handleLogout = async () => {

@@ -5,17 +5,18 @@ import ConsentsUI from "../../UI/ConsentUI.jsx";
 
 function Consents() {
   const [page, setPage] = useState(1);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const { records, pagination, loading, error, load } = usePaginatedResource(
     patientService.getConsents,
     "consents",
-    page
+    page,
   );
-
-
 
   const handleAction = async (id, action) => {
     try {
+      setActionLoading(true);
+
       if (action === "ACCEPTED") {
         await patientService.acceptConsent(id);
       } else if (action === "REJECTED") {
@@ -24,9 +25,11 @@ function Consents() {
         await patientService.revokeConsent(id);
       }
 
-      load();
+      await load();
     } catch (err) {
       console.error("Consent action failed:", err);
+    } finally {
+      setActionLoading(false);
     }
   };
   if (loading && records.length === 0) return <div>Loading consents...</div>;
@@ -34,14 +37,18 @@ function Consents() {
 
   return (
     <>
-      <ConsentsUI consentData={records} onAction={handleAction} />
+      <ConsentsUI
+        consentData={records}
+        onAction={handleAction}
+        isActionLoading={actionLoading}
+      />
 
       {/* Pagination */}
       {pagination && (
         <div className="flex justify-center items-center gap-6 pt-8">
           <button
-            disabled={!pagination.hasPrevPage}
-            onClick={() => setPage(prev => prev - 1)}
+            disabled={!pagination.hasPrevPage || actionLoading}
+            onClick={() => setPage((prev) => prev - 1)}
             className="px-5 py-2 rounded-xl bg-slate-100 text-slate-600 font-semibold disabled:opacity-40 hover:bg-slate-200 transition"
           >
             Previous
@@ -52,8 +59,8 @@ function Consents() {
           </span>
 
           <button
-            disabled={!pagination.hasNextPage}
-            onClick={() => setPage(prev => prev + 1)}
+            disabled={!pagination.hasNextPage || actionLoading}
+            onClick={() => setPage((prev) => prev + 1)}
             className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold disabled:opacity-40 hover:bg-purple-700 transition"
           >
             Next

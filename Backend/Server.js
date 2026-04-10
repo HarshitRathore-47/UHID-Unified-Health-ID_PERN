@@ -21,7 +21,7 @@ function getCorsOrigins() {
   const isProd = process.env.NODE_ENV === 'production'
   console.log('--- [DEBUG] CORS CONFIG START ---')
   console.log('NODE_ENV:', process.env.NODE_ENV)
-  
+
   const raw = isProd ? process.env.CORS_ORIGIN_PROD : process.env.CORS_ORIGIN_DEV
   console.log('RAW ENV VALUE:', `"${raw}"`)
 
@@ -81,6 +81,14 @@ app.use('/consents', consentRoutes)
 app.use((err, req, res, next) => {
   console.error('--- [SERVER ERROR] ---')
   console.error(err)
+
+  if (err.name === 'ZodError' || err.issues) {
+    return res.status(400).json({
+      success: false,
+      message: err.issues?.[0]?.message || 'Validation failed',
+      errors: err.issues // Pura error list taaki frontend detailed validation dikha sake
+    })
+  }
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error',
@@ -88,7 +96,7 @@ app.use((err, req, res, next) => {
   })
 })
 
-const PORT = process.env.PORT || 10000
+const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`🚀 Server is LIVE at port ${PORT}`)
   console.log(`🌍 NODE_ENV is set to: ${process.env.NODE_ENV}`)

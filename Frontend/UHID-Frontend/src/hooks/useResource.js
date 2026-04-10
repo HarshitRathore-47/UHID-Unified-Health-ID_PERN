@@ -7,7 +7,7 @@ const useResource = (fetchFunction, key, params = null, options = {}) => {
   const query = useQuery({
     queryKey: [key, params],
     queryFn: () => fetchFunction(params),
-    staleTime: 30000,
+    staleTime: 1000 * 60 * 5,
     // Agar options.enabled false hai toh interval bhi rok do (Editing ke waqt)
     refetchInterval: options.enabled === false ? false : 10000,
     refetchOnWindowFocus: true,

@@ -292,6 +292,8 @@ function HealthProfile() {
               <EditableField
                 label="Height (cm)"
                 name="height"
+                min={"0"}
+                max={"300"}
                 value={profile.height}
                 isEdit={isEditing}
                 onChange={handleInputChange}
@@ -301,6 +303,8 @@ function HealthProfile() {
               <EditableField
                 label="Weight (kg)"
                 name="weight"
+                min={"0"}
+                max={"300"}
                 value={profile.weight}
                 isEdit={isEditing}
                 onChange={handleInputChange}

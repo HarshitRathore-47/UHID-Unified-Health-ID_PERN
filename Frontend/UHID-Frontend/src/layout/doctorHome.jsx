@@ -11,7 +11,7 @@ import PatientRecord from "../components/dashboard/Doctors/PatientRecords";
 import DoctorProfile from "../components/dashboard/Doctors/DoctorProfile";
 
 function DoctorHome() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
 
   return (
     <div data-theme="doctor" className="flex min-h-screen">
