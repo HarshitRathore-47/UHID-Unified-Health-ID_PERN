@@ -6,10 +6,14 @@ cron.schedule("*/20 * * * *", async () => {
   try {
     const now = new Date();
 
+    // ✅ Solution: Buffer Time (Grace Period)
+    // Sirf un OTPs ko delete karo jo 5 minute pehle expire ho chuke hain
+    const bufferTime = new Date(Date.now() - 5 * 60 * 1000);
+
     const result = await prisma.authOtp.deleteMany({
       where: {
         OR: [
-          { expiresAt: { lt: now } },  // expired
+          { expiresAt: { lt: bufferTime } },  // expired
           {
             verified: true,
             createdAt: { lt: new Date(Date.now() - 1000 * 60 * 60) }, // verified 1hr ago
