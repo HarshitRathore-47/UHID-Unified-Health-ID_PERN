@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import doctorService from "../services/doctorServices";
+import { Eye, EyeOff } from "lucide-react";
 import useTheme from "../hooks/useTheme";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,6 +12,7 @@ export default function DoctorLogin() {
 
   const [identifier, setIdentifier] = useState(""); //
   const [password, setPassword] = useState(""); //
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -159,14 +161,25 @@ export default function DoctorLogin() {
                 <label className="text-xs font-semibold uppercase text-slate-400 block mb-2">
                   Password
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-(--ring)/30 outline-none transition-all"
-                  required
-                />
+                <div className="relative">
+                  {" "}
+                  {/* Wrapper added for positioning */}
+                  <input
+                    type={showPassword ? "text" : "password"} // Type toggle logic
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="w-full p-3 pr-12 rounded-xl border border-slate-200 focus:ring-2 focus:ring-purple-500/30 outline-none transition-all"
+                    required
+                  />
+                  <button
+                    type="button" // Important: type button rakho warna form submit ho jayega
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
               <button
                 disabled={loading}
