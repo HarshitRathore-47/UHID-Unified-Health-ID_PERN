@@ -278,9 +278,10 @@ export default function DoctorRegistration() {
 
       navigate("/doctor/login");
     } catch (err) {
-      console.error(err);
+      console.error("REGISTRATION ERROR:", err);
+      const backendMessage = err.response?.data?.message;
       setErrors({
-        general: err.message || "Registration failed",
+        general: backendMessage || err.message || "Registration failed",
       });
     } finally {
       setLoading(false);
@@ -822,9 +823,13 @@ export default function DoctorRegistration() {
         </AnimatePresence>
         {/* Navigation Section */}
         <div className="mt-8 space-y-4">
-          {/* Error */}
+          {/* Error Section */}
           {errors.general && (
-            <p className="text-sm text-red-500 text-center">{errors.general}</p>
+            <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+              <p className="text-sm font-semibold text-red-600">
+                {errors.general}
+              </p>
+            </div>
           )}
 
           {/* Login Link - Only Step 1 */}
