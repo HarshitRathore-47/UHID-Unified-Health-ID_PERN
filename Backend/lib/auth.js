@@ -113,7 +113,54 @@ Do not share it with anyone.`
     return { ok: false, error: err.message }
   }
 }
+// Welcome Email after Registration
+export async function sendWelcomeEmail(toEmail, patientName, uhid, details = {}) {
+  if (!toEmail) return { ok: false, error: 'Missing recipient email' };
 
+  const subject = 'Welcome to UHID - Your Healthcare Identity';
+  
+  // HTML Template for a professional look
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+      <h2 style="color: #4a148c; text-align: center;">Welcome to UHID System</h2>
+      <p>Hello <strong>${patientName}</strong>,</p>
+      <p>Thank you for registering with us. Your account has been successfully created.</p>
+      
+      <div style="background-color: #f3e5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 14px; color: #6a1b9a;"><strong>YOUR UHID ID:</strong></p>
+        <h1 style="margin: 5px 0; color: #4a148c; letter-spacing: 2px;">${uhid}</h1>
+      </div>
+
+      <p><strong>Quick Details:</strong></p>
+      <ul>
+        <li><strong>Name:</strong> ${patientName}</li>
+        <li><strong>UHID:</strong> ${uhid}</li>
+        <li><strong>Gender:</strong> ${details.gender || 'N/A'}</li>
+      </ul>
+
+      <p>Please use this UHID to login to your patient portal. Keep this ID safe for future hospital visits.</p>
+      
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="font-size: 12px; color: #888; text-align: center;">This is an automated message from UHID Secure Healthcare Identity.</p>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: FROM_EMAIL,
+    to: toEmail,
+    subject,
+    html // HTML bhejenge taaki look professional ho
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✉️ Welcome email sent to:', toEmail);
+    return { ok: true, info };
+  } catch (err) {
+    console.error('❌ Failed to send Welcome Email:', err.message);
+    return { ok: false, error: err.message };
+  }
+}
 // --- Middleware Helpers ---
 
 // ADMIN check

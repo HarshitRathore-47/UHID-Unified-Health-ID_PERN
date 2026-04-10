@@ -78,7 +78,7 @@ model PatientDocument {
   mimeType  String
   createdAt DateTime @default(now())
 
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@unique([patientId, type])
 }
@@ -201,7 +201,7 @@ model HealthProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model Prescription {
@@ -217,7 +217,7 @@ model Prescription {
   medicines PrescriptionMedicine[]
 
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   treatments Treatment[]
 }
@@ -274,7 +274,7 @@ model LabReport {
   remarksNotes String?
 
   // Relations
-  patient    Patient     @relation(fields: [patientId], references: [id])
+  patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctor     Doctor      @relation(fields: [doctorId], references: [id])
   results    LabResult[]
   treatments Treatment[]
@@ -315,7 +315,7 @@ model Treatment {
   doctorId             String
   status               TreatmentStatus @default(ACTIVE)
 
-  patient      Patient       @relation(fields: [patientId], references: [id])
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   prescription Prescription? @relation(fields: [prescriptionId], references: [id])
   report       LabReport?    @relation(fields: [reportId], references: [reportId], onDelete: Cascade)
   doctor       Doctor        @relation(fields: [doctorId], references: [id])
@@ -345,7 +345,7 @@ model Diet {
   createdAt          DateTime   @default(now())
   status             DietStatus @default(ACTIVE)
 
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
 }
 
@@ -368,7 +368,7 @@ model VaccinationHistory {
   hospitalName  String?
   doctorId      String
 
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
 }
 
@@ -383,7 +383,7 @@ model VisitHistory {
   physicianName       String // physician name
   physicianSpeciality String? // physician Speciality
 
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
 }
 
@@ -403,7 +403,7 @@ model Consent {
   createdAt     DateTime @default(now())
 
   // Relationships
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctor  Doctor  @relation(fields: [doctorId], references: [id])
 
   @@index([patientId, doctorId])

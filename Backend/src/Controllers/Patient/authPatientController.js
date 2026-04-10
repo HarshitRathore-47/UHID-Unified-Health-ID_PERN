@@ -18,7 +18,7 @@ import {
 import { successResponse, errorResponse } from '../../Utils/apiResponse.js'
 
 // RegisterPatient
-export async function registerPatient (req, res, next) {
+export async function registerPatient(req, res, next) {
   try {
     //Zod Validation
     const parsed = registerPatientSchema.safeParse(req.body)
@@ -158,6 +158,13 @@ export async function registerPatient (req, res, next) {
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
     })
+    sendWelcomeEmail(
+      result.email,
+      result.fullName,
+      display, // Ye display wala UHID hai (Formatted)
+      { gender: result.gender }
+    ).catch(e => console.error("Welcome email background error:", e));
+
 
     return successResponse(
       res,
@@ -179,7 +186,7 @@ export async function registerPatient (req, res, next) {
  * Body: { identifier, password }
  * Returns tempLoginId
  */
-export async function loginPatient (req, res, next) {
+export async function loginPatient(req, res, next) {
   try {
     // zod Validation
     const parsed = loginPatientSchema.safeParse(req.body)
@@ -241,7 +248,7 @@ export async function loginPatient (req, res, next) {
 
 //Treatments
 
-export function logoutUser (req, res) {
+export function logoutUser(req, res) {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
