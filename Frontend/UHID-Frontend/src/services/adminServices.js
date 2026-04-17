@@ -9,15 +9,15 @@ const extractData = (response) => {
 
 const adminService = {
   login: async (email, password) => {
-    const res = await apiClient.post("api/admin/login", { email, password });
+    const res = await apiClient.post("/api/admin/login", { email, password });
     return extractData(res);
   },
   logout: async () => {
-    const res = await apiClient.post("api/admin/logout");
+    const res = await apiClient.post("/api/admin/logout");
     return extractData(res);
   },
   getDashboard: async () => {
-    const res = await apiClient.get("api/admin/dashboard");
+    const res = await apiClient.get("/api/admin/dashboard");
     return extractData(res);
   },
   getAnalytics: async (filters) => {
@@ -30,59 +30,59 @@ const adminService = {
     return extractData(res);
   },
   getPendingDoctors: async (params) => {
-    const res = await apiClient.get("api/admin/doctors", { params });
+    const res = await apiClient.get("/api/admin/doctors", { params });
     return extractData(res);
   },
   getDoctorDetails: async (id) => {
-    const res = await apiClient.get(`api/admin/doctors/${id}`);
+    const res = await apiClient.get(`/api/admin/doctors/${id}`);
     return extractData(res);
   },
   approveDoctor: async (id) => {
-    const res = await apiClient.put(`api/admin/doctors/${id}/approve`);
+    const res = await apiClient.put(`/api/admin/doctors/${id}/approve`);
     return extractData(res);
   },
   rejectDoctor: async (id, reason) => {
-    const res = await apiClient.put(`api/admin/doctors/${id}/reject`, { reason });
+    const res = await apiClient.put(`/api/admin/doctors/${id}/reject`, { reason });
     return extractData(res);
   },
   getAuditLogs: async (params) => {
-    const res = await apiClient.get("api/admin/audit-logs", { params });
+    const res = await apiClient.get("/api/admin/audit-logs", { params });
     return extractData(res);
   },
   getDoctorDocument: async (docId) => {
-    const res = await apiClient.get(`api/admin/documents/${docId}`);
+    const res = await apiClient.get(`/api/admin/documents/${docId}`);
     return extractData(res);
   },
 
   // adminService.js
 
   getNotifications: async () => {
-    const res = await apiClient.get("api/admin/notifications");
+    const res = await apiClient.get("/api/admin/notifications");
     return extractData(res);
   },
 
   getUnreadCount: async () => {
-    const res = await apiClient.get("api/admin/notifications/unread-count");
+    const res = await apiClient.get("/api/admin/notifications/unread-count");
     return extractData(res);
   },
 
   markNotificationRead: async (id) => {
-    const res = await apiClient.patch(`api/admin/notifications/${id}/read`);
+    const res = await apiClient.patch(`/api/admin/notifications/${id}/read`);/
     return extractData(res);
   },
 
   markAllRead: async () => {
-    const res = await apiClient.patch(`api/admin/notifications/readAll`);
+    const res = await apiClient.patch(`/api/admin/notifications/readAll`);
     return extractData(res);
   },
 
   deleteNotification: async (id) => {
-    const res = await apiClient.delete(`api/admin/notifications/${id}`);
+    const res = await apiClient.delete(`/api/admin/notifications/${id}`);
     return extractData(res);
   },
 
   clearRead: async () => {
-    const res = await apiClient.delete("api/admin/notifications/clear-read");
+    const res = await apiClient.delete("/api/admin/notifications/clear-read");
     return extractData(res);
   },
 
