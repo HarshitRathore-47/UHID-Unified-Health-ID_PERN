@@ -28,7 +28,8 @@ function VisitForm({ patientId, onClose }) {
       await doctorService.createVisit(patientId, form);
       onClose(); // Triggers reload in PatientRecord
     } catch (err) {
-      setError(err.message || "Failed to add visit record");
+      const backendMessage = err.response?.data?.message;
+      setError(backendMessage || err.message || "Failed to add visit record");
     } finally {
       setLoading(false);
     }

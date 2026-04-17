@@ -34,7 +34,8 @@ function VaccinationForm({ patientId, onClose }) {
       await doctorService.createVaccination(patientId, form);
       onClose(); // Triggers reload in PatientRecord
     } catch (err) {
-      setError(err.message || "Failed to add vaccination record");
+      const backendMessage = err.response?.data?.message;
+      setError(backendMessage || err.message || "Failed to add vaccination record");
     } finally {
       setLoading(false);
     }

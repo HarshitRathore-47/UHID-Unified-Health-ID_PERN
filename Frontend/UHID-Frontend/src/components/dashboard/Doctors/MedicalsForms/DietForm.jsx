@@ -52,7 +52,8 @@ function DietForm({ patientId, onClose }) {
       await doctorService.createDiet(patientId, payload);
       onClose();
     } catch (err) {
-      setError(err.message || "Failed to add diet plan");
+      const backendMessage = err.response?.data?.message;
+      setError(backendMessage || err.message || "Failed to add diet plan");
     } finally {
       setLoading(false);
     }

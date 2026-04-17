@@ -67,7 +67,8 @@ export default function DoctorProfile() {
       toast.success("Profile Updated Successfully");
       setIsEdit(false);
     } catch (err) {
-      toast.error("Update failed");
+      const backendMessage = err.response?.data?.message;
+      toast.error(backendMessage || "Update failed");
     } finally {
       setIsSaving(false);
     }
@@ -102,13 +103,20 @@ export default function DoctorProfile() {
               <input
                 type="file"
                 className="hidden"
-                onChange={(e) =>
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
                   doctorService
-                    .updateProfilePhoto(e.target.files[0])
-                    .then(() =>
-                      queryClient.invalidateQueries(["doctorProfile"]),
-                    )
-                }
+                    .updateProfilePhoto(file)
+                    .then(() => {
+                      queryClient.invalidateQueries(["doctorProfile"]);
+                      toast.success("Photo Updated Successfully");
+                    })
+                    .catch((err) => {
+                      const backendMessage = err.response?.data?.message;
+                      toast.error(backendMessage || "Photo upload failed");
+                    });
+                }}
               />
             </label>
           </div>

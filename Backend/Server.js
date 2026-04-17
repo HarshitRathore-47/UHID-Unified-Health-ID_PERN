@@ -74,7 +74,7 @@ app.use(cookieParser())
 app.use('/api/auth', authRoutes)
 app.use('/api/patients', patientRoutes)
 app.use('/api/doctors', doctorRoutes)
-app.use('/admin', adminRoutes)
+app.use('api/admin', adminRoutes)
 app.use('/consents', consentRoutes)
 
 // --- 5. GLOBAL ERROR HANDLER ---

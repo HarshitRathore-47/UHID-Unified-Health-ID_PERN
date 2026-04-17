@@ -219,9 +219,10 @@ export default function PatientRegistration() {
 
       navigate("/patient/login");
     } catch (err) {
-      console.error(err);
+      console.error("PATIENT REGISTRATION ERROR:", err);
+      const backendMessage = err.response?.data?.message;
       setErrors({
-        general: err.message || "Registration failed",
+        general: backendMessage || err.message || "Registration failed",
       });
     } finally {
       setLoading(false);
@@ -724,9 +725,16 @@ export default function PatientRegistration() {
         </AnimatePresence>
         {/* Navigation Section */}
         <div className="mt-8 space-y-4">
-          {/* Error */}
+          {/* Error Section */}
           {errors.general && (
-            <p className="text-sm text-red-500 text-center">{errors.general}</p>
+            <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center gap-3 animate-pulse">
+              <div className="size-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 shrink-0">
+                <span className="font-bold">!</span>
+              </div>
+              <p className="text-sm font-semibold text-red-600">
+                {errors.general}
+              </p>
+            </div>
           )}
 
           {/* Login Link - Only Step 1 */}

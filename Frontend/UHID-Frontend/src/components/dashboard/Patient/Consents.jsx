@@ -28,6 +28,8 @@ function Consents() {
       await load();
     } catch (err) {
       console.error("Consent action failed:", err);
+      const backendMessage = err.response?.data?.message;
+      alert(backendMessage || err.message || "Consent action failed");
     } finally {
       setActionLoading(false);
     }

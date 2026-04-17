@@ -109,7 +109,8 @@ function LabReportForm({ patientId, onClose }) {
         setError("AI extraction failed to return data");
       }
     } catch (err) {
-      setError(err.message || "AI extraction failed");
+      const backendMessage = err.response?.data?.message;
+      setError(backendMessage || err.message || "AI extraction failed");
     } finally {
       setLoading(false);
     }

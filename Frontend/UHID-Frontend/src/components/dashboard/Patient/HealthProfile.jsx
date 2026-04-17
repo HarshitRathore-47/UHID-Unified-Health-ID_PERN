@@ -41,6 +41,7 @@ function HealthProfile() {
   const [showTick, setShowTick] = useState(false);
   const [profile, setProfile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const { data, loading, error, reload, updateCache } = useResource(
     patientService.getHealthProfile,
@@ -77,6 +78,7 @@ function HealthProfile() {
   // 4. PERSISTENCE (SAVE)
   const handleSave = async () => {
     try {
+      setSaveError("");
       // Payload limited to HealthProfile table fields in controller
       const healthPayload = {
         height: profile.height !== "" ? Number(profile.height) : null,
@@ -97,6 +99,8 @@ function HealthProfile() {
       setIsEditing(false);
     } catch (err) {
       console.error(err);
+      const backendMessage = err.response?.data?.message;
+      setSaveError(backendMessage || err.message || "Failed to update profile");
     }
     finally{
        setSaving(false);
@@ -109,6 +113,7 @@ function HealthProfile() {
     if (!file) return;
 
     try {
+      setSaveError("");
       const formData = new FormData();
       formData.append("photo", file);
 
@@ -117,6 +122,8 @@ function HealthProfile() {
       await reload(); // wait for fresh signed URL
     } catch (err) {
       console.error("Upload failed:", err);
+      const backendMessage = err.response?.data?.message;
+      setSaveError(backendMessage || err.message || "Photo upload failed");
     }
   };
 
@@ -141,6 +148,24 @@ function HealthProfile() {
     >
       {/* ACTION HEADER */}
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center bg-white/90 backdrop-blur-sm p-6 rounded-3xl shadow-md border border-slate-200 mb-8 gap-6">
+        {/* Error Section */}
+        <AnimatePresence>
+          {saveError && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 mt-4 z-50 bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center gap-3 shadow-xl"
+            >
+              <AlertCircle className="text-red-500" size={20} />
+              <p className="text-sm font-bold text-red-600">{saveError}</p>
+              <button onClick={() => setSaveError("")} className="ml-2 text-red-400 hover:text-red-600">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="flex flex-col  gap-4">
           <div className="flex flex-row">
             <div className="w-12 h-12 mr-2  bg-purple-100 rounded-xl flex items-center justify-center text-[#4a148c] ">

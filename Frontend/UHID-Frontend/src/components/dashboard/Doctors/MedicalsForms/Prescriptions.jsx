@@ -61,7 +61,8 @@ function PrescriptionForm({ patientId, onClose }) {
       await doctorService.createPrescription(patientId, form);
       onClose();
     } catch (err) {
-      setError(err.message || "Failed to create prescription");
+      const backendMessage = err.response?.data?.message;
+      setError(backendMessage || err.message || "Failed to create prescription");
     } finally {
       setLoading(false);
     }
