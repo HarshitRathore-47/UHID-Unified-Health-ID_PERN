@@ -26,7 +26,7 @@ const adminService = {
     if (filters.month !== "all") params.append("month", filters.month);
     if (filters.gender !== "all") params.append("gender", filters.gender);
     if (filters.age !== "all") params.append("age", filters.age);
-    const res = await apiClient.get(`/admin/analytics?${params.toString()}`);
+    const res = await apiClient.get(`/api/admin/analytics?${params.toString()}`);
     return extractData(res);
   },
   getPendingDoctors: async (params) => {
@@ -67,7 +67,7 @@ const adminService = {
   },
 
   markNotificationRead: async (id) => {
-    const res = await apiClient.patch(`/api/admin/notifications/${id}/read`);/
+    const res = await apiClient.patch(`/api/admin/notifications/${id}/read`);
     return extractData(res);
   },
 
