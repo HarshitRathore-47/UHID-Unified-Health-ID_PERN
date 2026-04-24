@@ -149,14 +149,13 @@ export async function verifyLoginOtp (req, res, next) {
       }
 
       const token = createJwt(jwtPayload)
-
       // remove OTP so it can't be reused
       await prisma.authOtp.delete({ where: { id: tempLoginId } })
 
       res.cookie('token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 * 7
       })
       return successResponse(

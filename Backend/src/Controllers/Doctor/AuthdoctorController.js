@@ -173,7 +173,7 @@ export async function registerDoctor (req, res, next) {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
     })
     // await createNotification({
@@ -240,7 +240,7 @@ export function logoutUser (req, res) {
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: 'lax'
   })
 
   return successResponse(res, {}, 'Logged out successfully')

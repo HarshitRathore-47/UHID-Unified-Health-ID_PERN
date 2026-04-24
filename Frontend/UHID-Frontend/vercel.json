@@ -1,7 +1,19 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api|consents).*)",
+      "source": "/api/(.*)",
+      "destination": "https://uhid-backend.onrender.com/api/$1"
+    },
+    {
+      "source": "/consents(.*)",
+      "destination": "https://uhid-backend.onrender.com/consents$1"
+    },
+    {
+      "source": "/test-network",
+      "destination": "https://uhid-backend.onrender.com/test-network"
+    },
+    {
+      "source": "/((?!api|consents|test-network).*)",
       "destination": "/index.html"
     }
   ],
